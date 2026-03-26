@@ -7,12 +7,19 @@ import os
 # For MySQL: "mysql+pymysql://user:password@localhost/dbname"
 DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://uco6w86mzvgsx:khnvamytgbxe@irintchev.com/dbnaipsmcu9bok")
 
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,  # Set to True for SQL debugging
-    pool_size=10,
-    max_overflow=20,
-)
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL,
+        echo=False,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    engine = create_engine(
+        DATABASE_URL,
+        echo=False,  # Set to True for SQL debugging
+        pool_size=10,
+        max_overflow=20,
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

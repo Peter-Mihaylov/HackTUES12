@@ -1,0 +1,11 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hacktues12-api
+    ports:
+      - "${API_PORT:-8001}:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://uco6w86mzvgsx:khnvamytgbxe@irintchev.com/dbnaipsmcu9bok}
+    restart: unless-stopped
