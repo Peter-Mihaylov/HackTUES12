@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bulgaria Route Planner | POI Along Route</title>
+    <!-- Leaflet CSS + JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Google Fonts + Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+        }
+
+        .map-panel {
+            flex: 3;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #cbd5e1;
+        }
+
+        .controls-panel {
+            flex: 0.95;
+            min-width: 290px;
+            max-width: 360px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 22px 20px;
+            gap: 20px;
+            border-left: 2px solid #1e1e1e;
+            overflow-y: auto;
+            box-shadow: -2px 0 12px rgba(0,0,0,0.03);
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eef2f6;
+            padding-bottom: 14px;
+        }
+        .header-section h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        .login-btn-header {
+            background: #2c7da0;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .login-btn-header:hover {
+            background: #1f5e7c;
+            transform: translateY(-1px);
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #4b5563;
+            margin: 8px 0 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .location-input-wrapper {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            background: white;
+            outline: none;
+        }
+
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 4px;
+        }
+        .suggestions-dropdown.show {
+            display: block;
+        }
+        .suggestion-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #eef2f6;
+            transition: background 0.1s;
+        }
+        .suggestion-item:hover {
+            background: #f1f5f9;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .suggestion-main {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        .suggestion-sub {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 8px 0 4px;
+            flex-wrap: wrap;
+        }
+
+        .small-btn {
+            background: #eef2ff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #1e293b;
+        }
+
+        .small-btn:hover {
+            background: #2c7da0;
+            color: white;
+        }
+
+        .slider-section {
+            margin: 10px 0 5px;
+        }
+        .slider-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+        .slider-input {
+            width: 100%;
+            accent-color: #2c7da0;
+            cursor: pointer;
+        }
+        .slider-info {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #6b7280;
+            text-align: center;
+        }
+        .poi-counter {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            background: #eef2ff;
+            border-radius: 40px;
+            padding: 4px 8px;
+            display: inline-block;
+            width: auto;
+        }
+
+        .info-card {
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 14px;
+            margin: 10px 0;
+        }
+
+        .distance-time {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .metric-box {
+            flex: 1;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 10px;
+        }
+
+        .metric-label {
+            font-size: 0.7rem;
+            color: #5b6e8c;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f3b4c;
+        }
+
+        .about-btn {
+            width: 100%;
+            background: #2c7da0;
+            border: none;
+            border-radius: 40px;
+            padding: 12px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .poi-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .poi-modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .poi-modal-card {
+            background: white;
+            border-radius: 28px;
+            padding: 24px;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+        .poi-modal-card h3 {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            color: #111827;
+        }
+        .poi-form-group {
+            margin-bottom: 16px;
+        }
+        .poi-form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+        .poi-form-group input, 
+        .poi-form-group select, 
+        .poi-form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .poi-form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        /* Removed star rating styles from creation */
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-submit {
+            background: #2c7da0;
+            color: white;
+        }
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .about-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .about-modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .about-modal-card {
+            background: white;
+            border-radius: 32px;
+            padding: 28px;
+            max-width: 360px;
+            text-align: center;
+        }
+        .status-text {
+            font-size: 0.7rem;
+            color: #2c7da0;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 780px) {
+            .app-container { flex-direction: column; }
+            .controls-panel { max-width: 100%; border-left: none; border-top: 2px solid black; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="map-panel">
+        <div id="map"></div>
+    </div>
+
+    <div class="controls-panel">
+        <div class="header-section">
+            <h2><i class="fas fa-road"></i> Route Planner</h2>
+            <button id="loginBtnHeader" class="login-btn-header"><i class="fas fa-sign-in-alt"></i> Log in</button>
+        </div>
+
+        <div>
+            <div class="section-title"><i class="fas fa-play-circle"></i> Starting point</div>
+            <div class="location-input-wrapper">
+                <div class="search-container">
+                    <input type="text" id="startSearchInput" class="search-input" placeholder="Search address in Bulgaria...">
+                    <div id="startSuggestions" class="suggestions-dropdown"></div>
+                </div>
+                <div class="button-group">
+                    <button id="useMyLocationStart" class="small-btn"><i class="fas fa-location-dot"></i> My location</button>
+                    <button id="pinModeStart" class="small-btn"><i class="fas fa-map-pin"></i> Place pin on map</button>
+                </div>
+                <div id="startPinStatus" class="status-text"></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-title"><i class="fas fa-flag-checkered"></i> Destination</div>
+            <div class="location-input-wrapper">
+                <div class="search-container">
+                    <input type="text" id="destSearchInput" class="search-input" placeholder="Search address in Bulgaria...">
+                    <div id="destSuggestions" class="suggestions-dropdown"></div>
+                </div>
+                <div class="button-group">
+                    <button id="useMyLocationDest" class="small-btn"><i class="fas fa-location-dot"></i> My location</button>
+                    <button id="pinModeDest" class="small-btn"><i class="fas fa-map-pin"></i> Place pin on map</button>
+                </div>
+                <div id="destPinStatus" class="status-text"></div>
+            </div>
+        </div>
+
+        <div class="slider-section">
+            <div class="section-title"><i class="fas fa-ruler-combined"></i> Show POIs within:</div>
+            <div class="slider-card">
+                <div class="slider-labels">
+                    <span>500m</span>
+                    <span>500 km</span>
+                </div>
+                <input type="range" id="distanceSlider" class="slider-input" min="0.5" max="500" step="0.5" value="5">
+                <div class="slider-info">
+                    <i class="fas fa-route"></i> Shows points within <strong id="sliderDistanceText">5</strong> km of your route
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="poiCountDisplay" class="poi-counter">📍 0 POIs visible</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="distance-time">
+                <div class="metric-box">
+                    <div class="metric-label"><i class="fas fa-road"></i> Distance</div>
+                    <div class="metric-value" id="distanceKm">— km</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label"><i class="fas fa-clock"></i> Est. time</div>
+                    <div class="metric-value" id="travelTime">—</div>
+                </div>
+            </div>
+        </div>
+
+        <button id="aboutUsBtn" class="about-btn"><i class="fas fa-info-circle"></i> About Us</button>
+    </div>
+</div>
+
+<div id="poiModal" class="poi-modal-overlay">
+    <div class="poi-modal-card">
+        <h3><i class="fas fa-plus-circle"></i> Add Point of Interest</h3>
+        <div class="poi-form-group">
+            <label>Name *</label>
+            <input type="text" id="poiName" placeholder="e.g., Happy Restaurant, Zara Store...">
+        </div>
+        <div class="poi-form-group">
+            <label>Type</label>
+            <select id="poiType">
+                <option value="food">🍕 Food</option>
+                <option value="clothing">👕 Clothing</option>
+                <option value="entertainment">🎬 Entertainment</option>
+                <option value="other">📍 Other</option>
+            </select>
+        </div>
+        <div class="poi-form-group">
+            <label>Description</label>
+            <textarea id="poiDescription" placeholder="Optional description..."></textarea>
+        </div>
+        <!-- NO STAR RATING HERE ANYMORE -->
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="cancelPoiBtn">Cancel</button>
+            <button class="btn-submit" id="submitPoiBtn">Add to Map</button>
+        </div>
+    </div>
+</div>
+
+<div id="aboutModal" class="about-modal-overlay">
+    <div class="about-modal-card">
+        <i class="fas fa-route" style="font-size: 2rem; color:#2c7da0"></i>
+        <h3>Road Router BG</h3>
+        <p>Real road routing using OSRM. Start & destination limited to Bulgaria addresses.<br>Click anywhere on the map to add custom POIs with icons!<br>Use the slider to filter POIs along your route.</p>
+        <button id="closeAboutBtn" style="margin-top: 16px; background:#2c7da0; border:none; padding:8px 20px; border-radius:40px; color:white;">Close</button>
+    </div>
+</div>
+
+<script type="module">
+    import { findPointsOfInterestWithinDistance } from './routeDistance.js';
+    import { addPOIData, getPOIByCoords, loadPOIData, getAllPOIs, addReviewToPOI, getPOIById, hasUserReviewed } from './reviewsData.js';
+
+    let map;
+    let startMarker = null;
+    let destMarker = null;
+    let currentRouteLayer = null;
+    let activePinMode = null;
+    let pendingClickCoords = null;
+    let allPOIs = [];
+    
+    let startCoords = { lat: 42.6977, lng: 23.3219 };
+    let destCoords = { lat: 42.1354, lng: 24.7453 };
+
+    loadPOIData();
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function showToast(msg, isSuccess = true) {
+        const toast = document.createElement('div');
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.background = isSuccess ? '#2c7da0' : '#d00000';
+        toast.style.color = 'white';
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '40px';
+        toast.style.fontSize = '0.9rem';
+        toast.style.fontWeight = '500';
+        toast.style.zIndex = '3000';
+        toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '8px';
+        toast.innerHTML = isSuccess ? `<i class="fas fa-check-circle"></i> ${msg}` : `<i class="fas fa-times-circle"></i> ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    window.openReviewPage = function(poiId) {
+        window.location.href = `review.html?id=${poiId}`;
+    };
+
+    async function searchAddress(query, countryCode = 'bg') {
+        if (!query.trim() || query.trim().length < 2) return [];
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=${countryCode}&limit=6&addressdetails=1&accept-language=bg,en`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            return data.map(item => ({
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon),
+                displayName: item.display_name,
+                mainText: item.display_name.split(',')[0],
+                subText: item.display_name.split(',').slice(1).join(',').trim()
+            }));
+        } catch (err) {
+            console.error('Search error:', err);
+            return [];
+        }
+    }
+
+    function setupAddressSearch(inputElement, suggestionsDiv, onSelect, isStart) {
+        let currentTimeout = null;
+        
+        inputElement.addEventListener('input', async (e) => {
+            const query = e.target.value;
+            if (query.length < 2) {
+                suggestionsDiv.classList.remove('show');
+                suggestionsDiv.innerHTML = '';
+                return;
+            }
+            if (currentTimeout) clearTimeout(currentTimeout);
+            currentTimeout = setTimeout(async () => {
+                const results = await searchAddress(query, 'bg');
+                if (results.length === 0) {
+                    suggestionsDiv.innerHTML = '<div class="suggestion-item" style="color:#9ca3af;">No results found</div>';
+                    suggestionsDiv.classList.add('show');
+                    return;
+                }
+                suggestionsDiv.innerHTML = '';
+                results.forEach(result => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.innerHTML = `
+                        <div class="suggestion-main">${escapeHtml(result.mainText)}</div>
+                        <div class="suggestion-sub">${escapeHtml(result.subText || result.displayName.substring(0, 60))}</div>
+                    `;
+                    div.addEventListener('click', () => {
+                        const coords = { lat: result.lat, lng: result.lng };
+                        onSelect(coords, result.displayName);
+                        inputElement.value = result.displayName;
+                        suggestionsDiv.classList.remove('show');
+                        if (isStart) {
+                            document.getElementById('startPinStatus').innerHTML = `✅ ${result.displayName.substring(0, 50)}`;
+                        } else {
+                            document.getElementById('destPinStatus').innerHTML = `✅ ${result.displayName.substring(0, 50)}`;
+                        }
+                        map.setView([result.lat, result.lng], 13);
+                    });
+                    suggestionsDiv.appendChild(div);
+                });
+                suggestionsDiv.classList.add('show');
+            }, 400);
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!inputElement.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        inputElement.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = inputElement.value;
+                if (query.length < 2) return;
+                const results = await searchAddress(query, 'bg');
+                if (results.length > 0) {
+                    const best = results[0];
+                    const coords = { lat: best.lat, lng: best.lng };
+                    onSelect(coords, best.displayName);
+                    inputElement.value = best.displayName;
+                    suggestionsDiv.classList.remove('show');
+                    if (isStart) {
+                        document.getElementById('startPinStatus').innerHTML = `✅ ${best.displayName.substring(0, 50)}`;
+                    } else {
+                        document.getElementById('destPinStatus').innerHTML = `✅ ${best.displayName.substring(0, 50)}`;
+                    }
+                    map.setView([best.lat, best.lng], 13);
+                } else {
+                    alert('No address found in Bulgaria. Please try a different search.');
+                }
+            }
+        });
+    }
+
+    async function fetchRouteAndMetrics(startLatLng, destLatLng) {
+        const coordString = `${startLatLng.lng},${startLatLng.lat};${destLatLng.lng},${destLatLng.lat}`;
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=false`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Routing failed');
+            const data = await response.json();
+            if (!data.routes || data.routes.length === 0) throw new Error('No route');
+            const route = data.routes[0];
+            const distanceKm = route.distance / 1000;
+            const durationSeconds = route.duration;
+            const hours = Math.floor(durationSeconds / 3600);
+            const minutes = Math.floor((durationSeconds % 3600) / 60);
+            let timeText = '';
+            if (hours > 0) timeText = `${hours}h ${minutes}min`;
+            else timeText = `${minutes} min`;
+            
+            const geojson = route.geometry;
+            const latLngs = geojson.coordinates.map(coord => L.latLng(coord[1], coord[0]));
+            if (currentRouteLayer) map.removeLayer(currentRouteLayer);
+            currentRouteLayer = L.polyline(latLngs, { color: '#2c7da0', weight: 5, opacity: 0.9 }).addTo(map);
+            map.fitBounds(currentRouteLayer.getBounds(), { padding: [40, 40] });
+            
+            document.getElementById('distanceKm').innerText = distanceKm.toFixed(1) + ' km';
+            document.getElementById('travelTime').innerText = timeText;
+            
+            const currentSliderValue = parseFloat(document.getElementById('distanceSlider').value);
+            updatePOIVisibility(currentSliderValue);
+        } catch (err) {
+            console.error(err);
+            document.getElementById('distanceKm').innerText = '⚠️ error';
+            document.getElementById('travelTime').innerText = '—';
+        }
+    }
+    
+    function updateStart(coords, addressLabel = '') {
+        startCoords = coords;
+        if (startMarker) map.removeLayer(startMarker);
+        const greenFlagIcon = L.divIcon({
+            html: '<div style="background-color:#2b9348; width: 28px; height: 28px; border-radius: 50% 50% 2px 50%; background:#2b9348; border:2px solid white; display:flex; align-items:center; justify-content:center;"><i class="fas fa-flag" style="color:white; font-size:12px;"></i></div>',
+            iconSize: [28, 28],
+            className: 'start-flag-icon'
+        });
+        startMarker = L.marker([coords.lat, coords.lng], { icon: greenFlagIcon, draggable: true }).addTo(map);
+        startMarker.bindTooltip(`Start: ${addressLabel || '📍 Pin'}`, { permanent: false });
+        startMarker.on('dragend', (e) => {
+            const pos = e.target.getLatLng();
+            startCoords = { lat: pos.lat, lng: pos.lng };
+            updateStart(startCoords, 'Dragged pin');
+            fetchRouteAndMetrics(startCoords, destCoords);
+        });
+        fetchRouteAndMetrics(startCoords, destCoords);
+    }
+    
+    function updateDest(coords, addressLabel = '') {
+        destCoords = coords;
+        if (destMarker) map.removeLayer(destMarker);
+        const redFlagIcon = L.divIcon({
+            html: '<div style="background-color:#d00000; width: 28px; height: 28px; border-radius: 50% 50% 2px 50%; background:#d00000; border:2px solid white; display:flex; align-items:center; justify-content:center;"><i class="fas fa-flag-checkered" style="color:white; font-size:12px;"></i></div>',
+            iconSize: [28, 28],
+            className: 'dest-flag-icon'
+        });
+        destMarker = L.marker([coords.lat, coords.lng], { icon: redFlagIcon, draggable: true }).addTo(map);
+        destMarker.bindTooltip(`Dest: ${addressLabel || '🏁 Pin'}`, { permanent: false });
+        destMarker.on('dragend', (e) => {
+            const pos = e.target.getLatLng();
+            destCoords = { lat: pos.lat, lng: pos.lng };
+            updateDest(destCoords, 'Dragged destination');
+            fetchRouteAndMetrics(startCoords, destCoords);
+        });
+        fetchRouteAndMetrics(startCoords, destCoords);
+    }
+    
+    function updatePOIVisibility(distanceKm) {
+        if (!currentRouteLayer || allPOIs.length === 0) {
+            const countSpan = document.getElementById('poiCountDisplay');
+            if (countSpan) countSpan.innerHTML = `📍 0 POIs visible`;
+            return;
+        }
+        
+        const latLngs = currentRouteLayer.getLatLngs();
+        const routeCoordinates = latLngs.map(point => [point.lng, point.lat]);
+        const maxDistanceMeters = distanceKm * 1000;
+        const visiblePOIs = findPointsOfInterestWithinDistance(routeCoordinates, allPOIs, maxDistanceMeters);
+        
+        allPOIs.forEach(marker => {
+            if (marker._map) marker._map.removeLayer(marker);
+        });
+        
+        visiblePOIs.forEach(marker => {
+            if (!marker._map && map) marker.addTo(map);
+        });
+        
+        const countSpan = document.getElementById('poiCountDisplay');
+        if (countSpan) {
+            countSpan.innerHTML = `📍 ${visiblePOIs.length} POI${visiblePOIs.length !== 1 ? 's' : ''} visible`;
+        }
+    }
+    
+    function getIconForType(type) {
+        let iconHtml = '';
+        switch(type) {
+            case 'food':
+                iconHtml = '<div style="background:#f59e0b; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-carrot" style="color:white; font-size:16px;"></i></div>';
+                break;
+            case 'clothing':
+                iconHtml = '<div style="background:#3b82f6; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-tshirt" style="color:white; font-size:16px;"></i></div>';
+                break;
+            case 'entertainment':
+                iconHtml = '<div style="background:#8b5cf6; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-film" style="color:white; font-size:16px;"></i></div>';
+                break;
+            default:
+                iconHtml = '<div style="background:#6b7280; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-map-pin" style="color:white; font-size:16px;"></i></div>';
+        }
+        return L.divIcon({
+            html: iconHtml,
+            iconSize: [32, 32],
+            className: 'poi-icon',
+            popupAnchor: [0, -16]
+        });
+    }
+    
+    function addPOI(lat, lng, name, type, description, rating = 0, pendingReview = null) {
+        const icon = getIconForType(type);
+        const marker = L.marker([lat, lng], { icon: icon }).addTo(map);
+        
+        const typeLabels = {
+            food: '🍕 Food',
+            clothing: '👕 Clothing',
+            entertainment: '🎬 Entertainment',
+            other: '📍 Other'
+        };
+        
+        const poiId = Date.now().toString() + Math.random().toString(36).substr(2, 6);
+        marker.poiId = poiId;
+        
+        const starsDisplay = rating > 0 ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : 'No rating';
+        
+        const popupContent = `
+            <div style="min-width: 180px;">
+                <strong style="font-size: 1rem;">${escapeHtml(name)}</strong><br>
+                <span style="color: #2c7da0; font-size: 0.8rem;">${typeLabels[type] || type}</span><br>
+                ${description ? `<p style="margin: 6px 0; font-size: 0.8rem;">${escapeHtml(description)}</p>` : ''}
+                <div style="color: #fbbf24; font-size: 0.9rem;">${starsDisplay}</div>
+                <button onclick="window.openReviewPage('${poiId}')" style="margin-top: 8px; background: #2c7da0; color: white; border: none; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fas fa-star"></i> Reviews
+                </button>
+            </div>
+        `;
+        marker.bindPopup(popupContent);
+        
+        addPOIData({
+            id: poiId,
+            name: name,
+            type: type,
+            description: description,
+            rating: rating,
+            lat: lat,
+            lng: lng,
+            reviews: []
+        });
+        
+        if (pendingReview) {
+            addReviewToPOI(poiId, pendingReview);
+        }
+        
+        return marker;
+    }
+    
+    function loadExistingPOIs() {
+        const savedPOIs = getAllPOIs();
+        savedPOIs.forEach(poiData => {
+            const icon = getIconForType(poiData.type);
+            const marker = L.marker([poiData.lat, poiData.lng], { icon: icon }).addTo(map);
+            marker.poiId = poiData.id;
+            
+            const typeLabels = {
+                food: '🍕 Food',
+                clothing: '👕 Clothing',
+                entertainment: '🎬 Entertainment',
+                other: '📍 Other'
+            };
+            
+            const starsDisplay = poiData.rating > 0 ? '★'.repeat(Math.round(poiData.rating)) + '☆'.repeat(5 - Math.round(poiData.rating)) : 'No rating';
+            
+            const popupContent = `
+                <div style="min-width: 180px;">
+                    <strong style="font-size: 1rem;">${escapeHtml(poiData.name)}</strong><br>
+                    <span style="color: #2c7da0; font-size: 0.8rem;">${typeLabels[poiData.type] || poiData.type}</span><br>
+                    ${poiData.description ? `<p style="margin: 6px 0; font-size: 0.8rem;">${escapeHtml(poiData.description)}</p>` : ''}
+                    <div style="color: #fbbf24; font-size: 0.9rem;">${starsDisplay}</div>
+                    <button onclick="window.openReviewPage('${poiData.id}')" style="margin-top: 8px; background: #2c7da0; color: white; border: none; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.7rem;">
+                        <i class="fas fa-star"></i> Reviews (${poiData.reviews?.length || 0})
+                    </button>
+                </div>
+            `;
+            marker.bindPopup(popupContent);
+            allPOIs.push(marker);
+        });
+    }
+    
+    function getCurrentLocation(isStart) {
+        if (!navigator.geolocation) { alert("Geolocation not supported"); return; }
+        navigator.geolocation.getCurrentPosition((position) => {
+            const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+            if (isStart) {
+                updateStart(coords, "My Location");
+                document.getElementById('startSearchInput').value = `My Location (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+            } else {
+                updateDest(coords, "My Location");
+                document.getElementById('destSearchInput').value = `My Location (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+            }
+            map.setView([coords.lat, coords.lng], 13);
+        }, (err) => { alert("Could not get location: " + err.message); });
+    }
+    
+    function activatePinMode(type) {
+        activePinMode = type;
+        if (type === 'start') {
+            document.getElementById('startPinStatus').innerHTML = '📍 Click anywhere on map to set START point';
+            document.getElementById('destPinStatus').innerHTML = '';
+        } else {
+            document.getElementById('destPinStatus').innerHTML = '📍 Click anywhere on map to set DESTINATION point';
+            document.getElementById('startPinStatus').innerHTML = '';
+        }
+        map.getContainer().style.cursor = 'crosshair';
+    }
+    
+    function deactivatePinMode() {
+        activePinMode = null;
+        map.getContainer().style.cursor = '';
+        setTimeout(() => {
+            if (document.getElementById('startPinStatus').innerHTML.includes('Click')) 
+                document.getElementById('startPinStatus').innerHTML = '';
+            if (document.getElementById('destPinStatus').innerHTML.includes('Click')) 
+                document.getElementById('destPinStatus').innerHTML = '';
+        }, 100);
+    }
+    
+    function onMapClick(e) {
+        if (activePinMode === 'start') {
+            const coords = { lat: e.latlng.lat, lng: e.latlng.lng };
+            updateStart(coords, `Pin: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
+            document.getElementById('startSearchInput').value = `Custom pin (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+            deactivatePinMode();
+        } else if (activePinMode === 'dest') {
+            const coords = { lat: e.latlng.lat, lng: e.latlng.lng };
+            updateDest(coords, `Pin: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
+            document.getElementById('destSearchInput').value = `Custom pin (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+            deactivatePinMode();
+        } else {
+            pendingClickCoords = e.latlng;
+            document.getElementById('poiName').value = '';
+            document.getElementById('poiDescription').value = '';
+            document.getElementById('poiType').value = 'food';
+            document.getElementById('poiModal').classList.add('active');
+        }
+    }
+    
+    function initMap() {
+        map = L.map('map').setView([42.7, 23.3], 8);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors, CartoDB'
+        }).addTo(map);
+        
+        updateStart(startCoords, "Sofia (default)");
+        updateDest(destCoords, "Plovdiv (default)");
+        
+        map.on('click', onMapClick);
+        
+        loadExistingPOIs();
+    }
+    
+    document.getElementById('useMyLocationStart').addEventListener('click', () => getCurrentLocation(true));
+    document.getElementById('useMyLocationDest').addEventListener('click', () => getCurrentLocation(false));
+    document.getElementById('pinModeStart').addEventListener('click', () => { deactivatePinMode(); activatePinMode('start'); });
+    document.getElementById('pinModeDest').addEventListener('click', () => { deactivatePinMode(); activatePinMode('dest'); });
+    
+    document.getElementById('submitPoiBtn').addEventListener('click', () => {
+        const name = document.getElementById('poiName').value.trim();
+        if (!name) {
+            alert('Please enter a name for the point of interest');
+            return;
+        }
+        const type = document.getElementById('poiType').value;
+        const description = document.getElementById('poiDescription').value;
+        
+        if (pendingClickCoords) {
+            const pendingReviewStr = sessionStorage.getItem('pendingReview');
+            let pendingReview = null;
+            
+            if (pendingReviewStr) {
+                pendingReview = JSON.parse(pendingReviewStr);
+                sessionStorage.removeItem('pendingReview');
+                showToast(`✅ POI "${name}" created successfully with your review!`, true);
+            } else {
+                showToast(`✅ POI "${name}" created successfully!`, true);
+            }
+            
+            const marker = addPOI(pendingClickCoords.lat, pendingClickCoords.lng, name, type, description, 0, pendingReview);
+            allPOIs.push(marker);
+            document.getElementById('poiModal').classList.remove('active');
+            pendingClickCoords = null;
+            
+            const currentSliderValue = parseFloat(document.getElementById('distanceSlider').value);
+            updatePOIVisibility(currentSliderValue);
+        }
+    });
+    
+    document.getElementById('cancelPoiBtn').addEventListener('click', () => {
+        document.getElementById('poiModal').classList.remove('active');
+        pendingClickCoords = null;
+    });
+    
+    document.getElementById('loginBtnHeader').addEventListener('click', () => {
+        window.location.href = 'login.html';
+    });
+    
+    const distanceSlider = document.getElementById('distanceSlider');
+    const sliderDistanceText = document.getElementById('sliderDistanceText');
+    
+    distanceSlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        const displayValue = value % 1 === 0 ? value : value.toFixed(1);
+        sliderDistanceText.textContent = displayValue;
+        updatePOIVisibility(value);
+    });
+    
+    const aboutModal = document.getElementById('aboutModal');
+    document.getElementById('aboutUsBtn').addEventListener('click', () => aboutModal.classList.add('active'));
+    document.getElementById('closeAboutBtn').addEventListener('click', () => aboutModal.classList.remove('active'));
+    aboutModal.addEventListener('click', (e) => { if(e.target === aboutModal) aboutModal.classList.remove('active'); });
+    
+    setupAddressSearch(
+        document.getElementById('startSearchInput'),
+        document.getElementById('startSuggestions'),
+        (coords, displayName) => updateStart(coords, displayName),
+        true
+    );
+    setupAddressSearch(
+        document.getElementById('destSearchInput'),
+        document.getElementById('destSuggestions'),
+        (coords, displayName) => updateDest(coords, displayName),
+        false
+    );
+    
+    window.addEventListener('DOMContentLoaded', initMap);
+</script>
+</body>
+</html>
