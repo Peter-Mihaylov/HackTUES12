@@ -10,7 +10,7 @@ function switchTab(m) {
   document.getElementById('form-subtitle').textContent =
     m === 'in' ? 'Sign in to continue your journey' : 'Join thousands of travelers';
   document.getElementById('cta-label').textContent =
-    m === 'in' ? 'Continue your journey' : 'Join RouteRoots';
+    m === 'in' ? 'Continue your journey' : 'Sign up';
 
   const forgotLink = document.getElementById('forgot-lnk');
   if (forgotLink) {

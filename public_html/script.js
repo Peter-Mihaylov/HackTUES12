@@ -410,7 +410,7 @@ function buildPopupContent(poiId, name, type, description, rating, reviewCount) 
 
 function addPOI(lat, lng, name, type, description, rating, pendingReview) {
     const emoji  = getEmojiForType(type);
-    const marker = L.marker([lat, lng], { icon: getIconForType(type, emoji) }).addTo(map);
+    const marker = L.marker([lat, lng], { icon: getIconForType(type, emoji) });
     const poiId  = Date.now().toString() + Math.random().toString(36).substr(2, 6);
     marker.poiId = poiId;
     marker.bindPopup(buildPopupContent(poiId, name, type, description, rating || 0, 0));
@@ -421,7 +421,7 @@ function addPOI(lat, lng, name, type, description, rating, pendingReview) {
 
 function loadExistingPOIs() {
     getAllPOIs().forEach(d => {
-        const marker = L.marker([d.lat, d.lng], { icon: getIconForType(d.type, d.emoji) }).addTo(map);
+        const marker = L.marker([d.lat, d.lng], { icon: getIconForType(d.type, d.emoji) });
         marker.poiId = d.id;
         marker.bindPopup(buildPopupContent(d.id, d.name, d.type, d.description, d.rating, d.reviews?.length || 0));
         allPOIs.push(marker);
@@ -518,6 +518,7 @@ async function initMap() {
 
     await loadPOIData();
     loadExistingPOIs();
+    updatePOIVisibility(parseFloat(document.getElementById('distanceSlider').value));
     renderWaypointBadges();
 }
 
