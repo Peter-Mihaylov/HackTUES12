@@ -39,3 +39,12 @@ def get_vendor(vendor_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=get_message("vendor_not_found", lang))
     return vendor
 
+# ════════════════════════════════════════════════════════════════════
+#  GET /vendors
+#  List all vendors
+# ════════════════════════════════════════════════════════════════════
+
+@router.get("/", response_model=list[VendorOut])
+def list_vendors(db: Session = Depends(get_db)):
+    """List all vendors"""
+    return db.query(Vendor).all()
