@@ -99,9 +99,9 @@
         <div class="poi-form-group">
             <label>Type</label>
             <select id="poiType">
-                <option value="food">🍕 Food</option>
+                <option value="food">🍅 Food</option>
                 <option value="clothing">👕 Clothing</option>
-                <option value="entertainment">🎬 Entertainment</option>
+                <option value="drinks">🥤 Drinks</option>
                 <option value="other">📍 Other</option>
             </select>
         </div>
@@ -112,6 +112,17 @@
         <div class="modal-buttons">
             <button class="btn-cancel" id="cancelPoiBtn">Cancel</button>
             <button class="btn-submit" id="submitPoiBtn">Add to Map</button>
+        </div>
+    </div>
+</div>
+
+<div id="loginRequiredModal" class="poi-modal-overlay">
+    <div class="poi-modal-card login-required-card">
+        <h3><i class="fas fa-lock"></i> Login Required</h3>
+        <p class="login-required-text">You are not logged in. Only logged users can add reviews and create new points of interest.</p>
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="cancelLoginRequiredBtn">Close</button>
+            <button class="btn-submit" id="goToLoginBtn">Go to Login</button>
         </div>
     </div>
 </div>

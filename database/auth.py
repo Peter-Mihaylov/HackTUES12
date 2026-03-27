@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -7,6 +8,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from typing import Annotated
+from dotenv import dotenv_values
 
 from models import User
 from schemas import TokenData
@@ -14,9 +16,10 @@ from database import get_db
 
 # -------------------------------------------------------------------
 # Security configuration
-# Generate your own secret with:  openssl rand -hex 32
+# Load SECRET_KEY from the .env file one directory up (project root)
 # -------------------------------------------------------------------
-SECRET_KEY = "705287af50f1b188f649fcea798b140dcba23aea394221be4bbeeaddb676fae2"
+_env = dotenv_values(Path(__file__).resolve().parent.parent / ".env")
+SECRET_KEY = _env["SECRET_KEY"]
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
