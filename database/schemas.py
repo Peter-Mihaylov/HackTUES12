@@ -68,12 +68,14 @@ class VendorOut(BaseModel):
 class RatingCreate(BaseModel):
     vendor_id: int
     rating: float
+    description: Optional[str] = None
 
 class RatingOut(BaseModel):
     id: int
     vendor_id: int
     user_id: int
     rating: float
+    description: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

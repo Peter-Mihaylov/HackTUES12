@@ -78,7 +78,8 @@ class VendorRating(Base):
     user_id    = Column(Integer, ForeignKey("users.id"),   nullable=False)
 
     # ── Rating value ─────────────────────────────────────────────
-    rating     = Column(Float, nullable=False)  # 0.0 - 5.0
+    rating      = Column(Float, nullable=False)  # 0.0 - 5.0
+    description = Column(Text, nullable=True)     # optional review message
 
     # ── Timestamps ───────────────────────────────────────────────
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

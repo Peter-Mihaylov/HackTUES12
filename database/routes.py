@@ -115,6 +115,7 @@ def create_rating(
         vendor_id=rating_data.vendor_id,
         user_id=current_user.id,
         rating=rating_data.rating,
+        description=rating_data.description,
     )
     db.add(new_rating)
     db.commit()
