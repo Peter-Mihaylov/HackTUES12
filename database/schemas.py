@@ -61,6 +61,23 @@ class VendorOut(BaseModel):
     model_config = {"from_attributes": True}
 
 # ════════════════════════════════════════════════════════════════════
+#  RATING SCHEMAS
+# ════════════════════════════════════════════════════════════════════
+
+class RatingCreate(BaseModel):
+    vendor_id: int
+    rating: float
+
+class RatingOut(BaseModel):
+    id: int
+    vendor_id: int
+    user_id: int
+    rating: float
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+# ════════════════════════════════════════════════════════════════════
 #  TOKEN SCHEMA
 # ════════════════════════════════════════════════════════════════════
 

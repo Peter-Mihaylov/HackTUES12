@@ -13,8 +13,8 @@ from auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
 from database import get_db
-from models import User, Vendor
-from schemas import Token, UserCreate, UserOut, VendorCreate, VendorOut
+from models import User, Vendor, VendorRating
+from schemas import Token, UserCreate, UserOut, VendorCreate, VendorOut, RatingCreate, RatingOut
 from messages import get_message
 
 router = APIRouter()
