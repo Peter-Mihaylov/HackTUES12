@@ -97,7 +97,7 @@ def create_vendor(
     return vendor
 
 
-@rating_router.post("/rating", response_model=RatingOut)
+@vendors_router.post("/rating", response_model=RatingOut)
 def create_rating(
     rating_data: RatingCreate,
     current_user: User = Depends(get_current_active_user),
@@ -120,19 +120,6 @@ def create_rating(
     db.commit()
     db.refresh(new_rating)
     return new_rating
-
-
-@rating_router.get("/{vendor_id}", response_model=list[RatingOut])
-def get_vendor_ratings(vendor_id: int, db: Session = Depends(get_db)):
-    """Get all ratings for a vendor"""
-    return db.query(VendorRating).filter(VendorRating.vendor_id == vendor_id).all()
-
-
-@rating_router.get("/", response_model=list[RatingOut])
-def list_ratings(db: Session = Depends(get_db)):
-    """List all ratings"""
-    return db.query(VendorRating).all()
-
 
 @vendors_router.get("/{vendor_id}", response_model=VendorOut)
 def get_vendor(vendor_id: int, db: Session = Depends(get_db)):
