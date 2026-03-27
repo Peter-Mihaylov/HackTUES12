@@ -539,7 +539,7 @@ document.getElementById('cancelPoiBtn').addEventListener('click', () => {
 });
 
 document.getElementById('loginBtnHeader').addEventListener('click', () => {
-    window.location.href = 'login.html';
+    window.location.href = 'login_page.html';
 });
 
 const distanceSlider = document.getElementById('distanceSlider');
