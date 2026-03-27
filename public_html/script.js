@@ -332,13 +332,13 @@ function getIconForType(type, emoji = null) {
     let iconHtml = '';
     switch(type) {
         case 'food':
-            iconHtml = '<div style="background:#f59e0b; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-carrot" style="color:white; font-size:16px;"></i></div>';
+            iconHtml = '<div style="background:#f59e0b; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><span style="font-size:16px; line-height:1;">🍅</span></div>';
             break;
         case 'clothing':
             iconHtml = '<div style="background:#3b82f6; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-tshirt" style="color:white; font-size:16px;"></i></div>';
             break;
-        case 'entertainment':
-            iconHtml = '<div style="background:#8b5cf6; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-film" style="color:white; font-size:16px;"></i></div>';
+        case 'drinks':
+            iconHtml = '<div style="background:#06b6d4; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><span style="font-size:16px; line-height:1;">🥤</span></div>';
             break;
         default:
             iconHtml = '<div style="background:#6b7280; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-map-pin" style="color:white; font-size:16px;"></i></div>';
@@ -351,14 +351,26 @@ function getIconForType(type, emoji = null) {
     });
 }
 
+function getEmojiForType(type) {
+    const emojiByType = {
+        food: '🍅',
+        clothing: '👕',
+        drinks: '🥤',
+        other: '📍'
+    };
+
+    return emojiByType[type] || emojiByType.other;
+}
+
 function addPOI(lat, lng, name, type, description, rating = 0, pendingReview = null) {
-    const icon = getIconForType(type);
+    const emoji = getEmojiForType(type);
+    const icon = getIconForType(type, emoji);
     const marker = L.marker([lat, lng], { icon: icon }).addTo(map);
     
     const typeLabels = {
-        food: '🍕 Food',
+        food: '🍅 Food',
         clothing: '👕 Clothing',
-        entertainment: '🎬 Entertainment',
+        drinks: '🥤 Drinks',
         other: '📍 Other'
     };
     
@@ -390,6 +402,7 @@ function addPOI(lat, lng, name, type, description, rating = 0, pendingReview = n
         name: name,
         type: type,
         description: description,
+        emoji: emoji,
         rating: rating,
         lat: lat,
         lng: lng,

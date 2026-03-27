@@ -25,9 +25,9 @@ function normalizeVendorToPOI(vendor) {
 
 function getCoverEmoji(type) {
     const emojiByType = {
-        food: '🍕',
+        food: '🍅',
         clothing: '👕',
-        entertainment: '🎬',
+        drinks: '🥤',
         other: '📍'
     };
 
