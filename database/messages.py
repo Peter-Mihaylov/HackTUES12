@@ -28,8 +28,35 @@ MESSAGES = {
         # Health
         "api_running": "Farm Market API работи",
         "status_healthy": "здрав",
+        "vendor_not_found": "Търговецът не е намерен.",
     },
-    "en": {}
+    "en": {
+        # Farms
+        "farm_not_found": "Vendor not found.",
+        "vendor_not_found": "Vendor not found.",
+        "farms_found": "Found {count} vendors within {radius} km.",
+        "no_farms_found": "No vendors found within {radius} km.",
+        "farms_with_products_found": "Found {count} vendors with matching products.",
+        "no_farms_with_products": "No products '{keyword}' found within {radius} km.",
+        "farm_created": "Vendor created successfully.",
+        "farm_updated": "Vendor updated successfully.",
+        
+        # Listings
+        "product_not_found": "Product not found.",
+        "product_created": "Product added successfully.",
+        "product_updated": "Product updated successfully.",
+        "product_deleted": "Product {id} deleted.",
+        "product_listings": "product listings",
+        
+        # Search
+        "search_required": "Please enter a keyword or select a category to search.",
+        "search_in_category": "in category '{category}'",
+        "search_for_keyword": "for '{keyword}'",
+        
+        # Health
+        "api_running": "Farm Market API is running",
+        "status_healthy": "healthy",
+    }
 }
 
 

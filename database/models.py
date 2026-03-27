@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime,
-    Text, Enum, Float, ForeignKey, Table
+    Text, Enum, Float, ForeignKey, Table, UniqueConstraint
 )
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime, timezone
@@ -72,6 +72,9 @@ class Vendor(Base):
 
 class VendorRating(Base):
     __tablename__ = "vendor_ratings"
+    __table_args__ = (
+        UniqueConstraint("vendor_id", "user_id", name="uq_vendor_user_rating"),
+    )
 
     # ── Identity ─────────────────────────────────────────────────
     id         = Column(Integer, primary_key=True, index=True)

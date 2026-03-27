@@ -2,6 +2,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import Optional
 from dataclasses import asdict
 
@@ -117,6 +118,14 @@ def create_rating(
     if rating_data.rating < 0.0 or rating_data.rating > 5.0:
         raise HTTPException(status_code=400, detail="Rating must be between 0.0 and 5.0")
 
+    # Check if user already rated this vendor
+    existing_rating = db.query(VendorRating).filter(
+        VendorRating.vendor_id == rating_data.vendor_id,
+        VendorRating.user_id == current_user.id,
+    ).first()
+    if existing_rating:
+        raise HTTPException(status_code=400, detail="You have already rated this vendor")
+
     new_rating = VendorRating(
         vendor_id=rating_data.vendor_id,
         user_id=current_user.id,
@@ -126,6 +135,14 @@ def create_rating(
     db.add(new_rating)
     db.commit()
     db.refresh(new_rating)
+
+    # Recalculate vendor average rating
+    avg_rating = db.query(func.avg(VendorRating.rating)).filter(
+        VendorRating.vendor_id == rating_data.vendor_id
+    ).scalar()
+    vendor.rating = round(avg_rating, 2)
+    db.commit()
+
     return new_rating
 
 @vendors_router.get("/{vendor_id}", response_model=VendorOut)
@@ -138,6 +155,10 @@ def get_vendor(vendor_id: int, lang: str = Query("bg"), db: Session = Depends(ge
 
 
 @vendors_router.get("/", response_model=list[VendorOut])
-def list_vendors(db: Session = Depends(get_db)):
+def list_vendors(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Max records to return"),
+    db: Session = Depends(get_db),
+):
     """List all vendors"""
-    return db.query(Vendor).all()
+    return db.query(Vendor).offset(skip).limit(limit).all()

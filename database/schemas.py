@@ -38,7 +38,6 @@ class VendorCreate(BaseModel):
     description: Optional[str] = None
     latitude: float
     longitude: float
-    rating: float = 0.0
     cover_image: Optional[str] = None
 
 
