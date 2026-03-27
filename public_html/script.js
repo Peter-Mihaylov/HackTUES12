@@ -11,8 +11,6 @@ let allPOIs = [];
 let startCoords = { lat: 42.6977, lng: 23.3219 };
 let destCoords = { lat: 42.1354, lng: 24.7453 };
 
-loadPOIData();
-
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -303,7 +301,22 @@ function updatePOIVisibility(distanceKm) {
     }
 }
 
-function getIconForType(type) {
+function getIconForType(type, emoji = null) {
+    if (emoji) {
+        const emojiStr = String(emoji).trim();
+        const isImage = /^https?:\/\//i.test(emojiStr);
+        const emojiHtml = isImage
+            ? `<img src="${escapeHtml(emojiStr)}" alt="POI" style="width:20px; height:20px; object-fit:cover; border-radius:50%;" />`
+            : `<span style="font-size:18px; line-height:1;">${escapeHtml(emojiStr)}</span>`;
+
+        return L.divIcon({
+            html: `<div style="background:#2563eb; width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.2);">${emojiHtml}</div>`,
+            iconSize: [32, 32],
+            className: 'poi-icon',
+            popupAnchor: [0, -16]
+        });
+    }
+
     let iconHtml = '';
     switch(type) {
         case 'food':
@@ -381,23 +394,15 @@ function addPOI(lat, lng, name, type, description, rating = 0, pendingReview = n
 function loadExistingPOIs() {
     const savedPOIs = getAllPOIs();
     savedPOIs.forEach(poiData => {
-        const icon = getIconForType(poiData.type);
+        const icon = getIconForType(poiData.type, poiData.emoji);
         const marker = L.marker([poiData.lat, poiData.lng], { icon: icon }).addTo(map);
         marker.poiId = poiData.id;
-        
-        const typeLabels = {
-            food: '🍕 Food',
-            clothing: '👕 Clothing',
-            entertainment: '🎬 Entertainment',
-            other: '📍 Other'
-        };
         
         const starsDisplay = poiData.rating > 0 ? '★'.repeat(Math.round(poiData.rating)) + '☆'.repeat(5 - Math.round(poiData.rating)) : 'No rating';
         
         const popupContent = `
             <div style="min-width: 200px;">
                 <strong style="font-size: 1rem;">${escapeHtml(poiData.name)}</strong><br>
-                <span style="color: #2c7da0; font-size: 0.8rem;">${typeLabels[poiData.type] || poiData.type}</span><br>
                 ${poiData.description ? `<p style="margin: 6px 0; font-size: 0.8rem;">${escapeHtml(poiData.description)}</p>` : ''}
                 <div style="color: #fbbf24; font-size: 0.9rem;">${starsDisplay}</div>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
@@ -473,7 +478,7 @@ function onMapClick(e) {
     }
 }
 
-function initMap() {
+async function initMap() {
     map = L.map('map').setView([42.7, 23.3], 8);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -485,6 +490,8 @@ function initMap() {
     updateDest(destCoords, "Plovdiv (default)");
     
     map.on('click', onMapClick);
+
+    await loadPOIData();
     
     loadExistingPOIs();
 }

@@ -183,8 +183,8 @@ a { text-decoration: none; }
 .pw-bar { flex: 1; height: 3px; border-radius: 2px; background: rgba(45,74,45,.1); transition: background .3s; }
 .pw-bar.s-weak   { background: #E05A5A; }
 .pw-bar.s-fair   { background: #D4A843; }
-.pw-bar.s-good   { background: var(--leaf); }
-.pw-bar.s-strong { background: var(--moss); }
+.pw-bar.s-good   { background: rgb(113, 192, 48); }
+.pw-bar.s-strong { background: rgb(57, 145, 57); }
 .pw-str-txt { font-size: 10px; font-weight: 500; color: rgba(58,40,24,.4); transition: color .3s; width: 44px; text-align: right; flex-shrink: 0; }
 .pw-str-txt.s-weak   { color: #E05A5A; }
 .pw-str-txt.s-fair   { color: #D4A843; }

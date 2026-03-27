@@ -95,13 +95,13 @@ function selectAccount(acc, row) {
   // After auth "completes", redirect
   setTimeout(() => {
     closeGooglePopup();
-    showToast(`🌿  Welcome, ${acc.name.split(' ')[0]}!`);
+    showToast(`Welcome, ${acc.name.split(' ')[0]}!`);
     // Fill the email field for a nice touch
     document.getElementById('inp-email').value = acc.email;
     valEmail(true);
     // Redirect to main app
     setTimeout(() => {
-      window.location.href = 'task.html';
+      window.location.href = 'index.html';
     }, 1600);
   }, 2200);
 }
@@ -250,8 +250,8 @@ function doAuth() {
     showToast('⚠️ Please enter your email address and password');
     return;
   }
-  showToast('🌿  Welcome to RouteRoots!');
-  setTimeout(() => { window.location.href = 'task.html'; }, 1500);
+  showToast('Welcome to RouteRoots!');
+  setTimeout(() => { window.location.href = 'index.html'; }, 1500);
 }
 
 let toastTimer;

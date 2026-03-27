@@ -1,28 +1,53 @@
 // reviewsData.js - Shared storage for POIs and their reviews
 
 let allPOIsData = [];
+const VENDORS_API_URL = 'http://localhost:8000/vendors/';
 
 // Track which users have reviewed which POIs (using browser fingerprint)
 // For demo purposes, we'll use localStorage to track reviewed POIs per device
 let userReviewedPOIs = new Set();
 
-export function loadPOIData() {
-    const saved = localStorage.getItem('poiReviewsData');
-    if (saved) {
-        allPOIsData = JSON.parse(saved);
-    }
-    
+function normalizeVendorToPOI(vendor) {
+    return {
+        id: String(vendor.id),
+        name: vendor.name,
+        type: 'other',
+        description: vendor.description || '',
+        lat: vendor.latitude,
+        lng: vendor.longitude,
+        emoji: vendor.cover_image || null,
+        rating: typeof vendor.rating === 'number' ? vendor.rating : 0,
+        reviews: []
+    };
+}
+
+export async function loadPOIData() {
     // Load user's reviewed POIs
     const reviewed = localStorage.getItem('userReviewedPOIs');
     if (reviewed) {
         userReviewedPOIs = new Set(JSON.parse(reviewed));
+    }
+
+    try {
+        const response = await fetch(VENDORS_API_URL);
+        if (!response.ok) {
+            throw new Error(`Failed to load vendors: ${response.status}`);
+        }
+
+        const vendors = await response.json();
+        console.log(vendors);
+        allPOIsData = Array.isArray(vendors)
+            ? vendors.map(normalizeVendorToPOI)
+            : [];
+    } catch (err) {
+        console.warn('Could not load POIs from API.', err);
+        allPOIsData = [];
     }
     
     return allPOIsData;
 }
 
 export function savePOIData() {
-    localStorage.setItem('poiReviewsData', JSON.stringify(allPOIsData));
     // Save user's reviewed POIs
     localStorage.setItem('userReviewedPOIs', JSON.stringify([...userReviewedPOIs]));
 }

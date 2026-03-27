@@ -49,9 +49,11 @@ class VendorUpdate(BaseModel):
 class VendorOut(BaseModel):
     id: int
     name: str
+    description: Optional[str] = None
     latitude: float
     longitude: float
     rating: float
+    cover_image: Optional[str] = None
     is_active: bool
     is_approved: bool
     created_at: datetime
