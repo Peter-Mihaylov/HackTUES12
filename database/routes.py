@@ -91,7 +91,7 @@ def create_vendor(
     db: Session = Depends(get_db),
 ):
     """Create a new vendor (requires Bearer token)"""
-    vendor = Vendor(**vendor_data.dict())
+    vendor = Vendor(**vendor_data.dict(), owner_id=current_user.id)
     db.add(vendor)
     db.commit()
     db.refresh(vendor)
