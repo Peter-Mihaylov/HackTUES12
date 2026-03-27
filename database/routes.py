@@ -129,7 +129,7 @@ def create_rating(
     return new_rating
 
 @vendors_router.get("/{vendor_id}", response_model=VendorOut)
-def get_vendor(vendor_id: int, db: Session = Depends(get_db)):
+def get_vendor(vendor_id: int, lang: str = Query("bg"), db: Session = Depends(get_db)):
     """Get vendor details"""
     vendor = db.query(Vendor).filter(Vendor.id == vendor_id).first()
     if not vendor:
