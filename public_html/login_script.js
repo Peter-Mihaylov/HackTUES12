@@ -98,7 +98,7 @@ function selectAccount(acc, row) {
     showToast(`Welcome, ${acc.name.split(' ')[0]}!`);
     // Fill the email field for a nice touch
     document.getElementById('inp-email').value = acc.email;
-    valEmail(true);
+    validateEmail(true);
     // Redirect to main app
     setTimeout(() => {
       window.location.href = 'index.html';
@@ -121,6 +121,7 @@ function addAccount() {
 ═══════════════════════════════════════ */
 let mode   = 'in';
 let pwShow = false;
+const AUTH_TOKEN_URL = 'http://localhost:8000/auth/token';
 
 function switchTab(m) {
   mode = m;
@@ -163,7 +164,7 @@ function clearHints() {
   resetPwBars();
 }
 
-function valName() {
+function validateName() {
   const v = document.getElementById('inp-name').value.trim();
   const inp = document.getElementById('inp-name');
   if (!v) { clearHint('hint-name'); inp.classList.remove('is-valid','is-error'); return true; }
@@ -177,7 +178,7 @@ function valName() {
   return true;
 }
 
-function valEmail(blur=false) {
+function validateEmail(blur=false) {
   const v   = document.getElementById('inp-email').value.trim();
   const inp = document.getElementById('inp-email');
   const ok  = document.getElementById('email-ok');
@@ -218,7 +219,7 @@ function resetPwBars() {
   lbl.className = 'pw-str-txt';
 }
 
-function valPw(blur=false) {
+function validatePw(blur=false) {
   const v   = document.getElementById('inp-pw').value;
   const inp = document.getElementById('inp-pw');
   if (!v) { clearHint('hint-pw'); inp.classList.remove('is-valid','is-error'); resetPwBars(); return false; }
@@ -241,17 +242,62 @@ function valPw(blur=false) {
   return true;
 }
 
-function doAuth() {
-  const emailOk = valEmail(true);
-  const pwOk    = valPw(true);
+async function doAuth() {
+  const emailOk = validateEmail(true);
+  const pwOk    = validatePw(true);
   let nameOk    = true;
-  if (mode === 'up') nameOk = valName();
+  if (mode === 'up') nameOk = validateName();
   if (!emailOk || !pwOk || (mode === 'up' && !nameOk)) {
     showToast('⚠️ Please enter your email address and password');
     return;
   }
-  showToast('Welcome to RouteRoots!');
-  setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+
+  const email = document.getElementById('inp-email').value.trim();
+  const password = document.getElementById('inp-pw').value;
+  const cta = document.querySelector('.btn-cta');
+
+  cta.disabled = true;
+  cta.classList.add('is-loading');
+
+  try {
+    const formData = new URLSearchParams();
+    formData.append('username', email);
+    formData.append('password', password);
+
+    const res = await fetch(AUTH_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: formData
+    });
+
+    const data = await res.json().catch(() => ({}));
+    console.log(data);
+
+    if (!res.ok) {
+      const detail = typeof data.detail === 'string' ? data.detail : 'Invalid credentials';
+      showToast(`⚠️ ${detail}`);
+      return;
+    }
+
+    if (!data.access_token) {
+      showToast('⚠️ Login succeeded but no token was returned');
+      return;
+    }
+
+    localStorage.setItem('routeplanner_access_token', data.access_token);
+    localStorage.setItem('routeplanner_token_type', data.token_type || 'bearer');
+    localStorage.setItem('routeplanner_auth_response', JSON.stringify(data));
+
+    showToast('Welcome to RouteRoots!');
+    setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+  } catch (_err) {
+    showToast('⚠️ Could not reach auth server. Is API running on localhost:8000?');
+  } finally {
+    cta.disabled = false;
+    cta.classList.remove('is-loading');
+  }
 }
 
 let toastTimer;
@@ -291,3 +337,4 @@ window.addEventListener('load', () => {
     });
   }, 700);
 });
+

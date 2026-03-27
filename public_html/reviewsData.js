@@ -1,5 +1,7 @@
 // reviewsData.js - Shared storage for POIs and their reviews
 
+import { authFetch } from './auth.js';
+
 let allPOIsData = [];
 const VENDORS_API_URL = 'http://localhost:8000/vendors/';
 
