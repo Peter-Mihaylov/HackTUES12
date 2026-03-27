@@ -39,6 +39,7 @@ class VendorCreate(BaseModel):
     latitude: float
     longitude: float
     rating: float = 0.0
+    cover_image: Optional[str] = None
 
 
 class VendorUpdate(BaseModel):

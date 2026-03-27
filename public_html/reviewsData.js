@@ -1,5 +1,7 @@
 // reviewsData.js - Shared storage for POIs and their reviews
 
+import { authFetch } from './auth.js';
+
 let allPOIsData = [];
 const VENDORS_API_URL = 'http://localhost:8000/vendors/';
 
@@ -19,6 +21,17 @@ function normalizeVendorToPOI(vendor) {
         rating: typeof vendor.rating === 'number' ? vendor.rating : 0,
         reviews: []
     };
+}
+
+function getCoverEmoji(type) {
+    const emojiByType = {
+        food: '🍅',
+        clothing: '👕',
+        drinks: '🥤',
+        other: '📍'
+    };
+
+    return emojiByType[type] || emojiByType.other;
 }
 
 export async function loadPOIData() {
@@ -47,9 +60,35 @@ export async function loadPOIData() {
     return allPOIsData;
 }
 
-export function savePOIData() {
+export function savePOIData(poiToSync = null) {
     // Save user's reviewed POIs
     localStorage.setItem('userReviewedPOIs', JSON.stringify([...userReviewedPOIs]));
+
+    // If a new POI is provided, also persist it to backend vendors API.
+    if (!poiToSync) return;
+
+    const payload = {
+        name: poiToSync.name,
+        description: poiToSync.description || '',
+        latitude: poiToSync.lat,
+        longitude: poiToSync.lng,
+        cover_image: poiToSync.emoji || getCoverEmoji(poiToSync.type)
+    };
+
+    void authFetch(VENDORS_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    }).then(async (response) => {
+        if (!response.ok) {
+            const errorBody = await response.text().catch(() => '');
+            console.warn('Failed to save POI to API.', response.status, errorBody);
+        }
+    }).catch((err) => {
+        console.warn('Could not save POI to API.', err);
+    });
 }
 
 export function getPOIById(id) {
@@ -68,7 +107,7 @@ export function addPOIData(poi) {
         reviews: poi.reviews || []
     };
     allPOIsData.push(newPOI);
-    savePOIData();
+    savePOIData(newPOI);
     return newPOI;
 }
 
