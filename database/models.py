@@ -64,3 +64,21 @@ class Vendor(Base):
     updated_at    = Column(DateTime(timezone=True),
                            default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
+
+# ════════════════════════════════════════════════════════════════
+#  RATING
+# ════════════════════════════════════════════════════════════════
+
+class VendorRating(Base):
+    __tablename__ = "vendor_ratings"
+
+    # ── Identity ─────────────────────────────────────────────────
+    id         = Column(Integer, primary_key=True, index=True)
+    vendor_id  = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    user_id    = Column(Integer, ForeignKey("users.id"),   nullable=False)
+
+    # ── Rating value ─────────────────────────────────────────────
+    rating     = Column(Float, nullable=False)  # 0.0 - 5.0
+
+    # ── Timestamps ───────────────────────────────────────────────
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

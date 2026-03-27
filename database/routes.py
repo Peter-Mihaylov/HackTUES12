@@ -97,6 +97,43 @@ def create_vendor(
     return vendor
 
 
+@rating_router.post("/rating", response_model=RatingOut)
+def create_rating(
+    rating_data: RatingCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Rate a vendor (requires Bearer token)"""
+    vendor = db.query(Vendor).filter(Vendor.id == rating_data.vendor_id).first()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    if rating_data.rating < 0.0 or rating_data.rating > 5.0:
+        raise HTTPException(status_code=400, detail="Rating must be between 0.0 and 5.0")
+
+    new_rating = VendorRating(
+        vendor_id=rating_data.vendor_id,
+        user_id=current_user.id,
+        rating=rating_data.rating,
+    )
+    db.add(new_rating)
+    db.commit()
+    db.refresh(new_rating)
+    return new_rating
+
+
+@rating_router.get("/{vendor_id}", response_model=list[RatingOut])
+def get_vendor_ratings(vendor_id: int, db: Session = Depends(get_db)):
+    """Get all ratings for a vendor"""
+    return db.query(VendorRating).filter(VendorRating.vendor_id == vendor_id).all()
+
+
+@rating_router.get("/", response_model=list[RatingOut])
+def list_ratings(db: Session = Depends(get_db)):
+    """List all ratings"""
+    return db.query(VendorRating).all()
+
+
 @vendors_router.get("/{vendor_id}", response_model=VendorOut)
 def get_vendor(vendor_id: int, db: Session = Depends(get_db)):
     """Get vendor details"""
