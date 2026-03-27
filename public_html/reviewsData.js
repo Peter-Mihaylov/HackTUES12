@@ -23,6 +23,17 @@ function normalizeVendorToPOI(vendor) {
     };
 }
 
+function getCoverEmoji(type) {
+    const emojiByType = {
+        food: '🍕',
+        clothing: '👕',
+        entertainment: '🎬',
+        other: '📍'
+    };
+
+    return emojiByType[type] || emojiByType.other;
+}
+
 export async function loadPOIData() {
     // Load user's reviewed POIs
     const reviewed = localStorage.getItem('userReviewedPOIs');
@@ -49,9 +60,35 @@ export async function loadPOIData() {
     return allPOIsData;
 }
 
-export function savePOIData() {
+export function savePOIData(poiToSync = null) {
     // Save user's reviewed POIs
     localStorage.setItem('userReviewedPOIs', JSON.stringify([...userReviewedPOIs]));
+
+    // If a new POI is provided, also persist it to backend vendors API.
+    if (!poiToSync) return;
+
+    const payload = {
+        name: poiToSync.name,
+        description: poiToSync.description || '',
+        latitude: poiToSync.lat,
+        longitude: poiToSync.lng,
+        cover_image: poiToSync.emoji || getCoverEmoji(poiToSync.type)
+    };
+
+    void authFetch(VENDORS_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    }).then(async (response) => {
+        if (!response.ok) {
+            const errorBody = await response.text().catch(() => '');
+            console.warn('Failed to save POI to API.', response.status, errorBody);
+        }
+    }).catch((err) => {
+        console.warn('Could not save POI to API.', err);
+    });
 }
 
 export function getPOIById(id) {
@@ -70,7 +107,7 @@ export function addPOIData(poi) {
         reviews: poi.reviews || []
     };
     allPOIsData.push(newPOI);
-    savePOIData();
+    savePOIData(newPOI);
     return newPOI;
 }
 
