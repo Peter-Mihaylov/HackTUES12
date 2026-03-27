@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bulgaria Route Planner | POI Along Route</title>
+    <!-- Leaflet CSS + JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Google Fonts + Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-container">
+    <div class="map-panel">
+        <div id="map"></div>
+    </div>
+
+    <div class="controls-panel">
+        <div class="header-section">
+            <h2><i class="fas fa-road"></i> Route Planner</h2>
+            <button id="loginBtnHeader" class="login-btn-header"><i class="fas fa-sign-in-alt"></i> Log in</button>
+        </div>
+
+        <div>
+            <div class="section-title"><i class="fas fa-play-circle"></i> Starting point</div>
+            <div class="location-input-wrapper">
+                <div class="search-container">
+                    <input type="text" id="startSearchInput" class="search-input" placeholder="Search address in Bulgaria...">
+                    <div id="startSuggestions" class="suggestions-dropdown"></div>
+                </div>
+                <div class="button-group">
+                    <button id="useMyLocationStart" class="small-btn"><i class="fas fa-location-dot"></i> My location</button>
+                    <button id="pinModeStart" class="small-btn"><i class="fas fa-map-pin"></i> Place pin on map</button>
+                </div>
+                <div id="startPinStatus" class="status-text"></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-title"><i class="fas fa-flag-checkered"></i> Destination</div>
+            <div class="location-input-wrapper">
+                <div class="search-container">
+                    <input type="text" id="destSearchInput" class="search-input" placeholder="Search address in Bulgaria...">
+                    <div id="destSuggestions" class="suggestions-dropdown"></div>
+                </div>
+                <div class="button-group">
+                    <button id="useMyLocationDest" class="small-btn"><i class="fas fa-location-dot"></i> My location</button>
+                    <button id="pinModeDest" class="small-btn"><i class="fas fa-map-pin"></i> Place pin on map</button>
+                </div>
+                <div id="destPinStatus" class="status-text"></div>
+            </div>
+        </div>
+
+        <div class="slider-section">
+            <div class="section-title"><i class="fas fa-ruler-combined"></i> Show POIs within:</div>
+            <div class="slider-card">
+                <div class="slider-labels">
+                    <span>0 m</span>
+                    <span>500 km</span>
+                </div>
+                <input type="range" id="distanceSlider" class="slider-input" min="0" max="500" step="0.5" value="5">
+                <div class="slider-info">
+                    <i class="fas fa-route"></i> Shows points within <strong id="sliderDistanceText">5</strong> km of your route
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="poiCountDisplay" class="poi-counter">📍 0 POIs visible</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="distance-time">
+                <div class="metric-box">
+                    <div class="metric-label"><i class="fas fa-road"></i> Distance</div>
+                    <div class="metric-value" id="distanceKm">— km</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label"><i class="fas fa-clock"></i> Est. time</div>
+                    <div class="metric-value" id="travelTime">—</div>
+                </div>
+            </div>
+        </div>
+
+        <button id="aboutUsBtn" class="about-btn"><i class="fas fa-info-circle"></i> About Us</button>
+    </div>
+</div>
+
+<div id="poiModal" class="poi-modal-overlay">
+    <div class="poi-modal-card">
+        <h3><i class="fas fa-plus-circle"></i> Add Point of Interest</h3>
+        <div class="poi-form-group">
+            <label>Name *</label>
+            <input type="text" id="poiName" placeholder="e.g., Happy Restaurant, Zara Store...">
+        </div>
+        <div class="poi-form-group">
+            <label>Type</label>
+            <select id="poiType">
+                <option value="food">🍕 Food</option>
+                <option value="clothing">👕 Clothing</option>
+                <option value="entertainment">🎬 Entertainment</option>
+                <option value="other">📍 Other</option>
+            </select>
+        </div>
+        <div class="poi-form-group">
+            <label>Description</label>
+            <textarea id="poiDescription" placeholder="Optional description..."></textarea>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" id="cancelPoiBtn">Cancel</button>
+            <button class="btn-submit" id="submitPoiBtn">Add to Map</button>
+        </div>
+    </div>
+</div>
+
+<div id="aboutModal" class="about-modal-overlay">
+    <div class="about-modal-card">
+        <i class="fas fa-route" style="font-size: 2rem; color:#2c7da0"></i>
+        <h3>Road Router BG</h3>
+        <p>Real road routing using OSRM. Start & destination limited to Bulgaria addresses.<br>Click anywhere on the map to add custom POIs!<br>Use the slider to filter POIs along your route.<br>Click "Add to Route" on any POI - the route recalculates to go through that location!</p>
+        <button id="closeAboutBtn" style="margin-top: 16px; background:#2c7da0; border:none; padding:8px 20px; border-radius:40px; color:white;">Close</button>
+    </div>
+</div>
+
+<script type="module" src="script.js"></script>
+</body>
+</html>
