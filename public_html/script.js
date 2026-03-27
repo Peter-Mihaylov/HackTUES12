@@ -495,6 +495,11 @@ function onMapClick(e) {
         document.getElementById('destSearchInput').value = `Custom pin (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
         deactivatePinMode();
     } else {
+        if (!getAccessToken()) {
+            document.getElementById('loginRequiredModal').classList.add('active');
+            return;
+        }
+
         pendingClickCoords = e.latlng;
         document.getElementById('poiName').value = '';
         document.getElementById('poiDescription').value = '';
@@ -561,6 +566,14 @@ document.getElementById('submitPoiBtn').addEventListener('click', () => {
 document.getElementById('cancelPoiBtn').addEventListener('click', () => {
     document.getElementById('poiModal').classList.remove('active');
     pendingClickCoords = null;
+});
+
+document.getElementById('cancelLoginRequiredBtn').addEventListener('click', () => {
+    document.getElementById('loginRequiredModal').classList.remove('active');
+});
+
+document.getElementById('goToLoginBtn').addEventListener('click', () => {
+    window.location.href = 'login_page.html';
 });
 
 document.getElementById('loginBtnHeader').addEventListener('click', () => {

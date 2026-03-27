@@ -16,7 +16,7 @@ export function getAuthorizationHeader() {
     return `${capitalize(getTokenType())} ${token}`;
 }
 
-export function authFetch(url, options = {}) {
+export async function authFetch(url, options = {}) {
     const headers = new Headers(options.headers || {});
     const authHeader = getAuthorizationHeader();
 
@@ -24,10 +24,16 @@ export function authFetch(url, options = {}) {
         headers.set('Authorization', authHeader);
     }
 
-    return fetch(url, {
+    const response = await fetch(url, {
         ...options,
         headers
     });
+
+    if (response.status === 401 && getAccessToken()) {
+        logout({ redirect: false });
+    }
+
+    return response;
 }
 
 export function clearAuthStorage() {
@@ -37,13 +43,23 @@ export function clearAuthStorage() {
 }
 
 export function logout(options = {}) {
+    const redirect = options.redirect ?? true;
     const redirectTo = options.redirectTo ?? 'login_page.html';
 
     clearAuthStorage();
 
-    if (redirectTo) {
+    syncLoggedOutButtonState();
+
+    if (redirect && redirectTo) {
         window.location.href = redirectTo;
     }
+}
+
+function syncLoggedOutButtonState() {
+    const btn = document.getElementById('loginBtnHeader');
+    if (!btn) return;
+
+    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Log in';
 }
 
 function capitalize(value) {
