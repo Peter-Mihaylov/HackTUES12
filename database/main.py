@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
 from farms_route import router as farms_router
+from auth_route import router as auth_router
 from messages import get_message
 
 # Initialize database tables
@@ -25,6 +26,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(farms_router)
+app.include_router(auth_router)
 
 
 # ════════════════════════════════════════════════════════════════════

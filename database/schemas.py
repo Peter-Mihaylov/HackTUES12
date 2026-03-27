@@ -1,8 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
-from models import UserRole, FarmType, ProductCategory, ProductStatus
-
 
 # ════════════════════════════════════════════════════════════════════
 #  USER SCHEMAS
@@ -59,3 +57,16 @@ class VendorOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+# ════════════════════════════════════════════════════════════════════
+#  TOKEN SCHEMA
+# ════════════════════════════════════════════════════════════════════
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
