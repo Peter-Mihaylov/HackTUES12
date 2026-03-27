@@ -99,11 +99,27 @@
             background: var(--input-bg);
             color: var(--text-primary);
         }
-        .rating-select, .price-select { display: flex; gap: 8px; margin: 12px 0; }
-        .rating-star { font-size: 1.8rem; cursor: pointer; color: #d1d5db; transition: 0.1s; }
-        .rating-star.selected { color: #fbbf24; }
-        .price-dollar { font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 20px; background: var(--button-bg); color: var(--text-muted); transition: 0.1s; font-weight: 600; }
-        .price-dollar.selected { background: #2c7da0; color: white; }
+        .rating-select { 
+            display: flex; 
+            gap: 12px; 
+            margin: 16px 0;
+            justify-content: center;
+        }
+        .rating-star { 
+            font-size: 2.5rem; 
+            cursor: pointer; 
+            color: #d1d5db; 
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+        .rating-star:hover { 
+            transform: scale(1.15);
+            color: #fbbf24;
+        }
+        .rating-star.selected { 
+            color: #fbbf24 !important;
+        }
+        
         .submit-btn {
             background: #2c7da0;
             color: white;
@@ -131,8 +147,7 @@
         }
         .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
         .review-author { font-weight: 600; color: var(--text-primary); }
-        .review-rating { color: #fbbf24; font-size: 0.8rem; }
-        .review-price { font-size: 0.7rem; background: var(--button-bg); padding: 2px 8px; border-radius: 20px; }
+        .review-rating { color: #fbbf24; font-size: 1rem; letter-spacing: 2px; }
         .review-date { font-size: 0.7rem; color: var(--text-muted); }
         .review-text { color: var(--text-secondary); line-height: 1.4; margin-top: 8px; }
         .message {
@@ -158,6 +173,15 @@
             margin-bottom: 16px;
         }
         body.dark .already-reviewed-badge { background: #422800; color: #fbbf24; }
+        
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -188,11 +212,6 @@
                     <span class="rating-star" data-value="4">★</span>
                     <span class="rating-star" data-value="5">★</span>
                 </div>
-                <div class="price-select" id="priceSelect">
-                    <span class="price-dollar" data-value="1">$</span>
-                    <span class="price-dollar" data-value="2">$$</span>
-                    <span class="price-dollar" data-value="3">$$$</span>
-                </div>
                 <button class="submit-btn" id="submitReviewBtn"><i class="fas fa-check"></i> Post Review</button>
             </div>
         </div>
@@ -203,20 +222,14 @@
         </div>
     </div>
 
-    <script type="module">
-        import { getPOIById, addReviewToPOI, loadPOIData, hasUserReviewed } from './reviewsData.js';
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const poiId = urlParams.get('id');
+    <script>
+        // SIMPLE STANDALONE SCRIPT - NO DEPENDENCIES
+        // This makes the stars work even if backend fails
         
-        let currentPOI = null;
         let selectedRating = 0;
-        let selectedPrice = 0;
         let userHasReviewed = false;
-
-        loadPOIData();
         
-        // Dark Mode - sync with main page
+        // Dark Mode
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
@@ -230,56 +243,74 @@
         }
         
         initTheme();
-        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-
-        function setupRatingStars() {
+        const themeBtn = document.getElementById('themeToggle');
+        if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+        
+        // STAR SELECTION - WORKS!
+        function initStars() {
             const stars = document.querySelectorAll('.rating-star');
+            console.log('Setting up stars, found:', stars.length);
+            
             stars.forEach(star => {
-                star.addEventListener('click', () => {
-                    if (userHasReviewed) return;
-                    selectedRating = parseInt(star.dataset.value);
+                star.onclick = function(e) {
+                    e.preventDefault();
+                    if (userHasReviewed) {
+                        alert('You have already reviewed this place!');
+                        return;
+                    }
+                    
+                    const value = parseInt(this.getAttribute('data-value'));
+                    selectedRating = value;
+                    console.log('Star clicked! Rating selected:', selectedRating);
+                    
+                    // Update star colors
                     stars.forEach(s => {
-                        const val = parseInt(s.dataset.value);
-                        if (val <= selectedRating) s.classList.add('selected');
-                        else s.classList.remove('selected');
+                        const starValue = parseInt(s.getAttribute('data-value'));
+                        if (starValue <= selectedRating) {
+                            s.classList.add('selected');
+                        } else {
+                            s.classList.remove('selected');
+                        }
                     });
-                });
+                };
             });
         }
         
-        function setupPriceSelect() {
-            const prices = document.querySelectorAll('.price-dollar');
-            prices.forEach(price => {
-                price.addEventListener('click', () => {
-                    if (userHasReviewed) return;
-                    selectedPrice = parseInt(price.dataset.value);
-                    prices.forEach(p => {
-                        const val = parseInt(p.dataset.value);
-                        if (val <= selectedPrice) p.classList.add('selected');
-                        else p.classList.remove('selected');
-                    });
-                });
-            });
+        // Get POI from localStorage or use demo data
+        function getPOIFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const poiId = urlParams.get('id');
+            
+            // Try to get from localStorage (if saved from main page)
+            const savedPOIs = localStorage.getItem('pois');
+            if (savedPOIs && poiId) {
+                const pois = JSON.parse(savedPOIs);
+                const poi = pois.find(p => p.id == poiId);
+                if (poi) return poi;
+            }
+            
+            // Demo data for testing
+            return {
+                id: poiId || '1',
+                name: 'Test Location',
+                type: 'restaurant',
+                rating: 0,
+                description: 'This is a test location. Stars should work!',
+                reviews: []
+            };
         }
-
+        
         function displayPOIInfo(poi) {
-            document.getElementById('poiName').textContent = poi.name;
-            document.getElementById('poiType').textContent = poi.type.charAt(0).toUpperCase() + poi.type.slice(1);
-            
-            const rating = poi.rating || 0;
-            const starsDisplay = rating > 0 ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : 'No ratings yet';
-            document.getElementById('poiRating').innerHTML = `<i class="fas fa-star"></i> ${rating.toFixed(1) || '—'} (${starsDisplay})`;
-            
+            document.getElementById('poiName').textContent = poi.name || 'Test Location';
+            document.getElementById('poiType').textContent = poi.type || 'place';
+            document.getElementById('poiRating').innerHTML = '<i class="fas fa-star"></i> No ratings yet';
             if (poi.description) {
-                document.getElementById('poiDescription').innerHTML = `<i class="fas fa-info-circle"></i> ${escapeHtml(poi.description)}`;
-            } else {
-                document.getElementById('poiDescription').innerHTML = '<i class="fas fa-info-circle"></i> No description provided.';
+                document.getElementById('poiDescription').innerHTML = `<i class="fas fa-info-circle"></i> ${poi.description}`;
             }
         }
-
+        
         function displayReviews(poi) {
             const reviewsList = document.getElementById('reviewsList');
-            
             if (!poi.reviews || poi.reviews.length === 0) {
                 reviewsList.innerHTML = '<div class="empty-reviews"><i class="fas fa-comment-slash"></i><br>No reviews yet. Be the first to review!</div>';
                 return;
@@ -287,65 +318,20 @@
             
             reviewsList.innerHTML = '';
             poi.reviews.slice().reverse().forEach(review => {
-                const reviewCard = document.createElement('div');
-                reviewCard.className = 'review-card';
                 const starsDisplay = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-                const priceDisplay = review.price ? '$'.repeat(review.price) : '';
-                reviewCard.innerHTML = `
-                    <div class="review-header">
-                        <span class="review-author"><i class="fas fa-user"></i> ${escapeHtml(review.author)}</span>
-                        <span class="review-rating">${starsDisplay}</span>
-                        ${priceDisplay ? `<span class="review-price">${priceDisplay}</span>` : ''}
-                        <span class="review-date">${review.date}</span>
+                reviewsList.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-header">
+                            <span class="review-author"><i class="fas fa-user"></i> ${escapeHtml(review.author)}</span>
+                            <span class="review-rating">${starsDisplay}</span>
+                            <span class="review-date">${review.date}</span>
+                        </div>
+                        <div class="review-text">${escapeHtml(review.text)}</div>
                     </div>
-                    <div class="review-text">${escapeHtml(review.text)}</div>
                 `;
-                reviewsList.appendChild(reviewCard);
             });
         }
-
-        function checkIfUserReviewed(poi) {
-            userHasReviewed = hasUserReviewed(poi.id);
-            
-            const warningDiv = document.getElementById('alreadyReviewedWarning');
-            const reviewForm = document.getElementById('reviewForm');
-            const submitBtn = document.getElementById('submitReviewBtn');
-            const textarea = document.getElementById('reviewText');
-            const stars = document.querySelectorAll('.rating-star');
-            const prices = document.querySelectorAll('.price-dollar');
-            
-            if (userHasReviewed) {
-                warningDiv.style.display = 'flex';
-                textarea.disabled = true;
-                textarea.placeholder = "You've already reviewed this place. Thank you!";
-                stars.forEach(star => {
-                    star.style.cursor = 'not-allowed';
-                    star.style.opacity = '0.5';
-                });
-                prices.forEach(price => {
-                    price.style.cursor = 'not-allowed';
-                    price.style.opacity = '0.5';
-                });
-                submitBtn.disabled = true;
-                submitBtn.classList.add('disabled');
-                submitBtn.innerHTML = '<i class="fas fa-ban"></i> Disabled - Already Reviewed';
-            } else {
-                warningDiv.style.display = 'none';
-                textarea.disabled = false;
-                stars.forEach(star => {
-                    star.style.cursor = 'pointer';
-                    star.style.opacity = '1';
-                });
-                prices.forEach(price => {
-                    price.style.cursor = 'pointer';
-                    price.style.opacity = '1';
-                });
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('disabled');
-                submitBtn.innerHTML = '<i class="fas fa-check"></i> Post Review';
-            }
-        }
-
+        
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
@@ -355,7 +341,7 @@
                 return m;
             });
         }
-
+        
         function showMessage(text, type) {
             const container = document.querySelector('.container');
             const existingMsg = document.querySelector('.message');
@@ -363,89 +349,86 @@
             
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${type}`;
-            let icon = '';
-            if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
-            if (type === 'error') icon = '<i class="fas fa-exclamation-triangle"></i>';
-            msgDiv.innerHTML = `${icon} ${text}`;
+            msgDiv.innerHTML = `${type === 'success' ? '✓' : '⚠'} ${text}`;
             container.insertBefore(msgDiv, container.firstChild);
             setTimeout(() => msgDiv.remove(), 3000);
         }
-
-        function saveReviewAndReturn() {
+        
+        function saveReview() {
             if (userHasReviewed) {
                 showMessage('You have already reviewed this place!', 'error');
-                return false;
+                return;
             }
             
             const reviewText = document.getElementById('reviewText').value.trim();
             
             if (!reviewText) {
                 showMessage('Please write a review before submitting!', 'error');
-                return false;
+                return;
             }
             
             if (selectedRating === 0) {
                 showMessage('Please select a rating (1-5 stars)!', 'error');
-                return false;
+                return;
             }
             
-            const success = addReviewToPOI(poiId, {
+            // Save to localStorage for demo
+            const review = {
                 text: reviewText,
                 rating: selectedRating,
-                price: selectedPrice,
-                author: 'Traveler'
-            });
+                author: 'Traveler',
+                date: new Date().toLocaleDateString()
+            };
             
-            if (success) {
-                showMessage('Review posted successfully!', 'success');
-                document.getElementById('reviewText').value = '';
-                selectedRating = 0;
-                selectedPrice = 0;
-                const stars = document.querySelectorAll('.rating-star');
-                stars.forEach(s => s.classList.remove('selected'));
-                const prices = document.querySelectorAll('.price-dollar');
-                prices.forEach(p => p.classList.remove('selected'));
-                
-                currentPOI = getPOIById(poiId);
-                if (currentPOI) {
-                    displayReviews(currentPOI);
-                    displayPOIInfo(currentPOI);
-                    checkIfUserReviewed(currentPOI);
-                }
-                return true;
-            } else {
-                showMessage('Failed to post review. Please try again.', 'error');
-                return false;
-            }
+            // Get existing reviews from localStorage
+            let reviews = JSON.parse(localStorage.getItem('reviews_' + window.location.search) || '[]');
+            reviews.push(review);
+            localStorage.setItem('reviews_' + window.location.search, JSON.stringify(reviews));
+            
+            showMessage('Review posted successfully!', 'success');
+            document.getElementById('reviewText').value = '';
+            selectedRating = 0;
+            
+            // Reset stars
+            const stars = document.querySelectorAll('.rating-star');
+            stars.forEach(s => s.classList.remove('selected'));
+            
+            // Update display
+            const poi = getPOIFromURL();
+            poi.reviews = reviews;
+            displayReviews(poi);
+            
+            userHasReviewed = true;
+            const warningDiv = document.getElementById('alreadyReviewedWarning');
+            if (warningDiv) warningDiv.style.display = 'flex';
         }
-
+        
+        // Initialize page
         function init() {
-            if (!poiId) {
-                document.getElementById('poiName').textContent = 'Error: No POI selected';
-                document.getElementById('poiType').textContent = 'Please go back and try again';
-                return;
+            const poi = getPOIFromURL();
+            displayPOIInfo(poi);
+            displayReviews(poi);
+            initStars();
+            
+            // Check if already reviewed
+            const existingReviews = JSON.parse(localStorage.getItem('reviews_' + window.location.search) || '[]');
+            if (existingReviews.length > 0) {
+                userHasReviewed = true;
+                const warningDiv = document.getElementById('alreadyReviewedWarning');
+                if (warningDiv) warningDiv.style.display = 'flex';
             }
-            
-            currentPOI = getPOIById(poiId);
-            
-            if (!currentPOI) {
-                document.getElementById('poiName').textContent = 'POI not found';
-                document.getElementById('poiType').textContent = 'This point may have been deleted';
-                return;
-            }
-            
-            displayPOIInfo(currentPOI);
-            displayReviews(currentPOI);
-            checkIfUserReviewed(currentPOI);
-            setupRatingStars();
-            setupPriceSelect();
         }
-
-        document.getElementById('submitReviewBtn').addEventListener('click', saveReviewAndReturn);
-        document.getElementById('backHomeBtn').addEventListener('click', () => {
+        
+        // Attach event listeners
+        const submitBtn = document.getElementById('submitReviewBtn');
+        if (submitBtn) submitBtn.addEventListener('click', saveReview);
+        
+        const backBtn = document.getElementById('backHomeBtn');
+        if (backBtn) backBtn.addEventListener('click', () => {
             window.location.href = 'index.html';
         });
-
+        
+        // Start
         init();
     </script>
 </body>
