@@ -58,6 +58,7 @@ class Vendor(Base):
     rating        = Column(Float, default=0.0, nullable=False)      # 0.0 - 5.0 scale
     # ── State ─────────────────────────────────────────────────────
     is_active     = Column(Boolean, default=True, nullable=False)
+    is_approved   = Column(Boolean, default=False, nullable=False)
     # ── Timestamps ────────────────────────────────────────────────
     created_at    = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at    = Column(DateTime(timezone=True),
