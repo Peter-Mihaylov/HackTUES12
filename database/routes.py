@@ -85,8 +85,12 @@ vendors_router = APIRouter(prefix="/vendors", tags=["vendors"])
 
 
 @vendors_router.post("/", response_model=VendorOut)
-def create_vendor(vendor_data: VendorCreate, db: Session = Depends(get_db)):
-    """Create a new vendor"""
+def create_vendor(
+    vendor_data: VendorCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Create a new vendor (requires Bearer token)"""
     vendor = Vendor(**vendor_data.dict())
     db.add(vendor)
     db.commit()
