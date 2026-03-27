@@ -26,9 +26,9 @@ router = APIRouter()
 auth_router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@auth_router.post("/register", response_model=UserOut)
+@auth_router.post("/register", response_model=Token)
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user"""
+    """Register a new user and return an access token"""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -42,12 +42,18 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         password_hash=hashed_password,
         first_name=user_data.first_name,
-        last_name=user_data.last_name,
+        # last_name=user_data.last_name,
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+
+    # Auto-login: generate access token for the new user
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": new_user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @auth_router.post("/token", response_model=Token)

@@ -21,11 +21,12 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
 
     # ── Basic profile ─────────────────────────────────────────────
-    first_name    = Column(String(100), nullable=False)
-    last_name     = Column(String(100), nullable=False)
+    first_name    = Column(String(255), nullable=True)
+    last_name     = Column(String(255), nullable=True)
 
     # ── Account state ─────────────────────────────────────────────
     is_active     = Column(Boolean, default=True, nullable=False)
+    is_verified   = Column(Boolean, default=True, nullable=False)
 
     # ── Timestamps ────────────────────────────────────────────────
     created_at    = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
