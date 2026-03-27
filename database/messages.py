@@ -28,5 +28,23 @@ MESSAGES = {
         # Health
         "api_running": "Farm Market API работи",
         "status_healthy": "здрав",
-    }
+    },
+    "en": {}
 }
+
+
+def get_message(key: str, lang: str = "bg", **kwargs) -> str:
+      """
+      Get a message in the specified language.
+      
+      Args:
+          key: Message key
+          lang: Language code ('en' or 'bg')
+          **kwargs: Placeholders to format the message
+      
+      Returns:
+          Formatted message string
+      """
+      lang = lang.lower() if lang in MESSAGES else "en"
+      message = MESSAGES[lang].get(key, MESSAGES["en"].get(key, key))
+      return message.format(**kwargs) if kwargs else message

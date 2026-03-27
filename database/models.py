@@ -18,7 +18,7 @@ class User(Base):
     # ── Identity ─────────────────────────────────────────────────
     id            = Column(Integer, primary_key=True, index=True)
     email         = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=False)
 
     # ── Basic profile ─────────────────────────────────────────────
     first_name    = Column(String(100), nullable=False)

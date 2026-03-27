@@ -1,6 +1,6 @@
 COMPOSE ?= docker compose
 SERVICE ?= api
-API_PORT ?= 8001
+API_PORT ?= 8000
 
 .PHONY: help up down rebuild logs ps health restart
 
