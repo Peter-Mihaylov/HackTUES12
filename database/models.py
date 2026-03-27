@@ -18,14 +18,14 @@ class User(Base):
     # ── Identity ─────────────────────────────────────────────────
     id            = Column(Integer, primary_key=True, index=True)
     email         = Column(String(255), unique=True, nullable=False, index=True)
-    hashed_password = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
 
     # ── Basic profile ─────────────────────────────────────────────
     first_name    = Column(String(100), nullable=False)
     last_name     = Column(String(100), nullable=False)
 
     # ── Account state ─────────────────────────────────────────────
-    is_active     = Column(Boolean, default=True,  nullable=False)
+    is_active     = Column(Boolean, default=True, nullable=False)
 
     # ── Timestamps ────────────────────────────────────────────────
     created_at    = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
