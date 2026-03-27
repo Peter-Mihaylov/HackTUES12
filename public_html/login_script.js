@@ -1,6 +1,7 @@
 let mode = 'in';
 let pwShow = false;
 const AUTH_TOKEN_URL = 'http://localhost:8000/auth/token';
+const AUTH_REGISTER_URL = 'http://localhost:8000/auth/register';
 
 function switchTab(m) {
   mode = m;
@@ -172,17 +173,24 @@ async function doAuth() {
   cta.classList.add('is-loading');
 
   try {
-    const formData = new URLSearchParams();
-    formData.append('username', email);
-    formData.append('password', password);
-
-    const res = await fetch(AUTH_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: formData
-    });
+    let res;
+    if (mode === 'up') {
+      const name = document.getElementById('inp-name').value.trim();
+      res = await fetch(AUTH_REGISTER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, first_name: name })
+      });
+    } else {
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
+      res = await fetch(AUTH_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+      });
+    }
 
     const data = await res.json().catch(() => ({}));
 
