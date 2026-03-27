@@ -1,5 +1,6 @@
 import { findPointsOfInterestWithinDistance } from './routeDistance.js';
 import { addPOIData, loadPOIData, getAllPOIs, addReviewToPOI, getPOIById } from './reviewsData.js';
+import { getAccessToken, logout } from './auth.js';
 
 let map;
 let startMarker = null;
@@ -41,6 +42,17 @@ function showToast(msg, isSuccess = true) {
     toast.innerHTML = isSuccess ? `<i class="fas fa-check-circle"></i> ${msg}` : `<i class="fas fa-times-circle"></i> ${msg}`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
+}
+
+function syncAuthButtonState() {
+    const btn = document.getElementById('loginBtnHeader');
+    if (!btn) return;
+
+    if (getAccessToken()) {
+        btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Log out';
+    } else {
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Log in';
+    }
 }
 
 window.openReviewPage = function(poiId) {
@@ -539,6 +551,11 @@ document.getElementById('cancelPoiBtn').addEventListener('click', () => {
 });
 
 document.getElementById('loginBtnHeader').addEventListener('click', () => {
+    if (getAccessToken()) {
+        logout({ redirectTo: 'login_page.html' });
+        return;
+    }
+
     window.location.href = 'login_page.html';
 });
 
@@ -570,4 +587,7 @@ setupAddressSearch(
     false
 );
 
-window.addEventListener('DOMContentLoaded', initMap);
+window.addEventListener('DOMContentLoaded', () => {
+    syncAuthButtonState();
+    initMap();
+});
