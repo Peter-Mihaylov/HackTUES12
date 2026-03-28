@@ -21,18 +21,6 @@
             --button-bg: #eef2ff;
         }
 
-        body.dark {
-            --bg-primary: #1a1a2e;
-            --bg-secondary: #16213e;
-            --bg-card: #0f172a;
-            --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --input-bg: #1e293b;
-            --button-bg: #334155;
-        }
-        
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-primary);
@@ -42,16 +30,6 @@
         }
         .container { max-width: 800px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .theme-toggle {
-            background: var(--button-bg);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 40px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-primary);
-        }
         .btn-home {
             background: var(--button-bg);
             border: none;
@@ -65,7 +43,7 @@
             transition: all 0.2s;
             color: var(--text-primary);
         }
-        .btn-home:hover, .theme-toggle:hover { background: #2c7da0; color: white; }
+        .btn-home:hover { background: #2c7da0; color: white; }
         .poi-info {
             background: var(--bg-secondary);
             border-radius: 24px;
@@ -115,7 +93,7 @@
         }
         .radio > label {
             cursor: pointer;
-            font-size: 30px;
+            font-size: 24px;
             position: relative;
             display: inline-block;
             transition: transform 0.3s ease;
@@ -123,36 +101,6 @@
         .radio > label > svg {
             fill: #666;
             transition: fill 0.3s ease, filter 0.3s ease;
-        }
-        .radio > label::before,
-        .radio > label::after {
-            content: "";
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background-color: #ff9e0b;
-            border-radius: 50%;
-            opacity: 0;
-            transform: scale(0);
-            transition: transform 0.4s ease, opacity 0.4s ease;
-            animation: particle-explosion 1s ease-out;
-        }
-        .radio > label::before {
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%) scale(0);
-        }
-        .radio > label::after {
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%) scale(0);
-        }
-        .radio > label:hover::before,
-        .radio > label:hover::after,
-        .radio > label.is-hovered::before,
-        .radio > label.is-hovered::after {
-            opacity: 1;
-            transform: translateX(-50%) scale(1.5);
         }
         .radio > label:hover,
         .radio > label.is-hovered,
@@ -167,20 +115,6 @@
         @keyframes pulse {
             0% { transform: scale(1); }
             100% { transform: scale(1.1); }
-        }
-        @keyframes particle-explosion {
-            0% {
-                opacity: 0;
-                transform: scale(0.5);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.2);
-            }
-            100% {
-                opacity: 0;
-                transform: scale(0.5);
-            }
         }
         @keyframes shimmer {
             0% { filter: drop-shadow(0 0 10px rgba(255, 158, 11, 0.5)); }
@@ -239,8 +173,6 @@
             gap: 8px;
             margin-bottom: 16px;
         }
-        body.dark .already-reviewed-badge { background: #422800; color: #fbbf24; }
-        
         .error-message {
             background: #fee2e2;
             color: #991b1b;
@@ -255,7 +187,6 @@
     <div class="container">
         <div class="header">
             <button class="btn-home" id="backHomeBtn"><i class="fas fa-home"></i> Back to Map</button>
-            <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i></button>
         </div>
 
         <div id="poiInfo" class="poi-info">
@@ -300,25 +231,12 @@
         // SIMPLE STANDALONE SCRIPT - NO DEPENDENCIES
         // This makes the stars work even if backend fails
         
+        const VENDORS_API_URL = 'http://localhost:8000/vendors/';
+
         let selectedRating = 0;
         let userHasReviewed = false;
+        let currentPOI = null;
         
-        // Dark Mode
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark');
-            }
-        }
-        
-        function toggleTheme() {
-            document.body.classList.toggle('dark');
-            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-        }
-        
-        initTheme();
-        const themeBtn = document.getElementById('themeToggle');
-        if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
         function renderRatingPreview(value) {
             const labels = document.querySelectorAll('#ratingSelect label');
             labels.forEach(label => {
@@ -365,36 +283,80 @@
             });
             renderRatingPreview(selectedRating);
         }
-        function getPOIFromURL() {
+        function getPOIIdFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            const poiId = urlParams.get('id');
-            
-            // Try to get from localStorage (if saved from main page)
-            const savedPOIs = localStorage.getItem('pois');
-            if (savedPOIs && poiId) {
-                const pois = JSON.parse(savedPOIs);
-                const poi = pois.find(p => p.id == poiId);
-                if (poi) return poi;
-            }
-            
-            // Demo data for testing
+            return urlParams.get('id');
+        }
+
+        function buildFallbackPOI(poiId) {
             return {
                 id: poiId || '1',
-                name: 'Test Location',
-                type: 'restaurant',
+                name: 'Unnamed vendor',
+                type: 'vendor',
                 rating: 0,
                 description: 'This is a test location. Stars should work!',
                 reviews: []
             };
         }
+
+        function getPOIFromLocalStorage(poiId) {
+            const savedPOIs = localStorage.getItem('pois');
+            if (savedPOIs && poiId) {
+                const pois = JSON.parse(savedPOIs);
+                const poi = pois.find(p => p.id == poiId);
+                if (poi) {
+                    return {
+                        ...poi,
+                        type: poi.type || 'vendor',
+                        description: poi.description || '',
+                        rating: typeof poi.rating === 'number' ? poi.rating : 0,
+                        reviews: poi.reviews || []
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        async function getPOIFromURL() {
+            const poiId = getPOIIdFromURL();
+            const localPOI = getPOIFromLocalStorage(poiId);
+            if (localPOI) {
+                return localPOI;
+            }
+
+            if (!poiId) {
+                return buildFallbackPOI();
+            }
+
+            try {
+                const response = await fetch(`${VENDORS_API_URL}${encodeURIComponent(poiId)}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load vendor: ${response.status}`);
+                }
+
+                const vendor = await response.json();
+                return {
+                    id: String(vendor.id),
+                    name: vendor.name || 'Unnamed vendor',
+                    type: 'vendor',
+                    rating: typeof vendor.rating === 'number' ? vendor.rating : 0,
+                    description: vendor.description || '',
+                    reviews: []
+                };
+            } catch (error) {
+                console.warn('Could not load vendor details for review page.', error);
+                return buildFallbackPOI(poiId);
+            }
+        }
         
         function displayPOIInfo(poi) {
-            document.getElementById('poiName').textContent = poi.name || 'Test Location';
+            document.getElementById('poiName').textContent = poi.name || 'Unnamed vendor';
             document.getElementById('poiType').textContent = poi.type || 'place';
-            document.getElementById('poiRating').innerHTML = '<i class="fas fa-star"></i> No ratings yet';
-            if (poi.description) {
-                document.getElementById('poiDescription').innerHTML = `<i class="fas fa-info-circle"></i> ${poi.description}`;
-            }
+            document.getElementById('poiRating').innerHTML = poi.rating > 0
+                ? `<i class="fas fa-star"></i> ${poi.rating.toFixed(1)} / 5`
+                : '<i class="fas fa-star"></i> No ratings yet';
+            document.getElementById('poiDescription').innerHTML = `<i class="fas fa-info-circle"></i> ${poi.description || 'No description available.'}`;
         }
         
         function displayReviews(poi) {
@@ -483,9 +445,12 @@
             });
             renderRatingPreview(0);
             // Update display
-            const poi = getPOIFromURL();
-            poi.reviews = reviews;
-            displayReviews(poi);
+            const poi = currentPOI || buildFallbackPOI(getPOIIdFromURL());
+            currentPOI = {
+                ...poi,
+                reviews
+            };
+            displayReviews(currentPOI);
             
             userHasReviewed = true;
             const warningDiv = document.getElementById('alreadyReviewedWarning');
@@ -493,15 +458,18 @@
         }
         
         // Initialize page
-        function init() {
-            const poi = getPOIFromURL();
-            displayPOIInfo(poi);
-            displayReviews(poi);
+        async function init() {
+            const poi = await getPOIFromURL();
+            currentPOI = poi;
+            displayPOIInfo(currentPOI);
+            displayReviews(currentPOI);
             initStars();
             
             // Check if already reviewed
             const existingReviews = JSON.parse(localStorage.getItem('reviews_' + window.location.search) || '[]');
             if (existingReviews.length > 0) {
+                currentPOI.reviews = existingReviews;
+                displayReviews(currentPOI);
                 userHasReviewed = true;
                 const warningDiv = document.getElementById('alreadyReviewedWarning');
                 if (warningDiv) warningDiv.style.display = 'flex';
