@@ -134,4 +134,24 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+--
+-- Table structure for table `vendor_ratings`
+--
+
+CREATE TABLE IF NOT EXISTS `vendor_ratings` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `vendor_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `rating` float NOT NULL,
+  `description` text,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_vendor_user_rating` (`vendor_id`, `user_id`),
+  KEY `ix_vendor_ratings_id` (`id`),
+  KEY `vendor_id` (`vendor_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_vendor_ratings_vendor` FOREIGN KEY (`vendor_id`) REFERENCES `vendors` (`id`),
+  CONSTRAINT `fk_vendor_ratings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Dump completed on 2026-03-27 11:50:28

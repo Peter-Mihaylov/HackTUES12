@@ -5,7 +5,7 @@ import os
 # Database URL (modify based on your setup - MySQL, PostgreSQL, SQLite, etc.)
 # For SQLite: "sqlite:///./test.db"
 # For MySQL: "mysql+pymysql://user:password@localhost/dbname"
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://uco6w86mzvgsx:khnvamytgbxe@irintchev.com/dbnaipsmcu9bok")
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://app:app_password@mysql:3306/vendor_market")
 
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(

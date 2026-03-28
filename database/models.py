@@ -21,8 +21,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
 
     # ── Basic profile ─────────────────────────────────────────────
-    first_name    = Column(String(255), nullable=True)
-    last_name     = Column(String(255), nullable=True)
+    user_name     = Column(String(255), nullable=True)
 
     # ── Account state ─────────────────────────────────────────────
     is_active     = Column(Boolean, default=True, nullable=False)

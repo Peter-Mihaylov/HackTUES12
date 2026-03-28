@@ -408,14 +408,19 @@ function buildPopupContent(poiId, name, type, description, rating, reviewCount) 
     </div>`;
 }
 
-function addPOI(lat, lng, name, type, description, rating, pendingReview) {
+async function addPOI(lat, lng, name, type, description, rating, pendingReview) {
     const emoji  = getEmojiForType(type);
     const marker = L.marker([lat, lng], { icon: getIconForType(type, emoji) });
     const poiId  = Date.now().toString() + Math.random().toString(36).substr(2, 6);
     marker.poiId = poiId;
     marker.bindPopup(buildPopupContent(poiId, name, type, description, rating || 0, 0));
-    addPOIData({ id: poiId, name, type, description, emoji, rating: rating || 0, lat, lng, reviews: [] });
-    if (pendingReview) addReviewToPOI(poiId, pendingReview);
+    const newPOI = await addPOIData({ id: poiId, name, type, description, emoji, rating: rating || 0, lat, lng, reviews: [] });
+    // Update marker with the real backend ID
+    if (newPOI && newPOI.id !== poiId) {
+        marker.poiId = newPOI.id;
+        marker.bindPopup(buildPopupContent(newPOI.id, name, type, description, rating || 0, 0));
+    }
+    if (pendingReview) addReviewToPOI(marker.poiId, pendingReview);
     return marker;
 }
 
@@ -531,7 +536,7 @@ document.getElementById('useMyLocationDest').addEventListener('click',  () => ge
 document.getElementById('pinModeStart').addEventListener('click', () => { deactivatePinMode(); activatePinMode('start'); });
 document.getElementById('pinModeDest').addEventListener('click',  () => { deactivatePinMode(); activatePinMode('dest');  });
 
-document.getElementById('submitPoiBtn').addEventListener('click', () => {
+document.getElementById('submitPoiBtn').addEventListener('click', async () => {
     const name = document.getElementById('poiName').value.trim();
     if (!name) { alert('Please enter a name for the point of interest'); return; }
     const type        = document.getElementById('poiType').value;
@@ -545,7 +550,7 @@ document.getElementById('submitPoiBtn').addEventListener('click', () => {
             sessionStorage.removeItem('pendingReview');
         }
         showToast(pendingReview ? `POI "${name}" created with your review!` : `POI "${name}" created!`, true);
-        const marker = addPOI(pendingClickCoords.lat, pendingClickCoords.lng, name, type, description, 0, pendingReview);
+        const marker = await addPOI(pendingClickCoords.lat, pendingClickCoords.lng, name, type, description, 0, pendingReview);
         allPOIs.push(marker);
         document.getElementById('poiModal').classList.remove('active');
         pendingClickCoords = null;

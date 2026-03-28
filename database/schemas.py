@@ -10,19 +10,16 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     first_name: str
-    # last_name: str
 
 class UserUpdate(BaseModel):
     email: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    user_name: Optional[str] = None
 
 
 class UserOut(BaseModel):
     id: int
     email: str
-    first_name: str
-    last_name: str
+    user_name: Optional[str] = None
     is_active: bool
     created_at: datetime
 
@@ -76,6 +73,7 @@ class RatingOut(BaseModel):
     rating: float
     description: Optional[str] = None
     created_at: datetime
+    user_name: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

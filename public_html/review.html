@@ -232,6 +232,15 @@
         // This makes the stars work even if backend fails
         
         const VENDORS_API_URL = 'http://localhost:8000/vendors/';
+        const ACCESS_TOKEN_KEY = 'routeplanner_access_token';
+        const TOKEN_TYPE_KEY = 'routeplanner_token_type';
+
+        function getAuthHeader() {
+            const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+            if (!token) return null;
+            const type = (localStorage.getItem(TOKEN_TYPE_KEY) || 'bearer').trim();
+            return type.charAt(0).toUpperCase() + type.slice(1) + ' ' + token;
+        }
 
         let selectedRating = 0;
         let userHasReviewed = false;
@@ -321,7 +330,22 @@
         async function getPOIFromURL() {
             const poiId = getPOIIdFromURL();
             const localPOI = getPOIFromLocalStorage(poiId);
+
+            // Fetch reviews from API for any valid poiId
+            let reviews = [];
+            if (poiId) {
+                try {
+                    const ratingsResp = await fetch(`${VENDORS_API_URL}${encodeURIComponent(poiId)}/ratings`);
+                    if (ratingsResp.ok) {
+                        reviews = await ratingsResp.json();
+                    }
+                } catch (e) {
+                    console.warn('Could not load reviews from API.', e);
+                }
+            }
+
             if (localPOI) {
+                localPOI.reviews = reviews;
                 return localPOI;
             }
 
@@ -342,7 +366,7 @@
                     type: 'vendor',
                     rating: typeof vendor.rating === 'number' ? vendor.rating : 0,
                     description: vendor.description || '',
-                    reviews: []
+                    reviews: reviews
                 };
             } catch (error) {
                 console.warn('Could not load vendor details for review page.', error);
@@ -367,16 +391,22 @@
             }
             
             reviewsList.innerHTML = '';
-            poi.reviews.slice().reverse().forEach(review => {
-                const starsDisplay = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+            poi.reviews.forEach(review => {
+                const rating = Math.round(review.rating || 0);
+                const starsDisplay = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+                const author = review.user_name || review.author || ('User #' + (review.user_id || '?'));
+                const text = review.description || review.text || '';
+                const date = review.created_at
+                    ? new Date(review.created_at).toLocaleDateString()
+                    : (review.date || '');
                 reviewsList.innerHTML += `
                     <div class="review-card">
                         <div class="review-header">
-                            <span class="review-author"><i class="fas fa-user"></i> ${escapeHtml(review.author)}</span>
+                            <span class="review-author"><i class="fas fa-user"></i> ${escapeHtml(author)}</span>
                             <span class="review-rating">${starsDisplay}</span>
-                            <span class="review-date">${review.date}</span>
+                            <span class="review-date">${escapeHtml(date)}</span>
                         </div>
-                        <div class="review-text">${escapeHtml(review.text)}</div>
+                        <div class="review-text">${escapeHtml(text)}</div>
                     </div>
                 `;
             });
@@ -404,7 +434,7 @@
             setTimeout(() => msgDiv.remove(), 3000);
         }
         
-        function saveReview() {
+        async function saveReview() {
             if (userHasReviewed) {
                 showMessage('You have already reviewed this place!', 'error');
                 return;
@@ -421,40 +451,59 @@
                 showMessage('Please select a rating (1-5 stars)!', 'error');
                 return;
             }
-            
-            // Save to localStorage for demo
-            const review = {
-                text: reviewText,
+
+            const authHeader = getAuthHeader();
+            if (!authHeader) {
+                showMessage('You must be logged in to submit a review!', 'error');
+                return;
+            }
+
+            const poiId = getPOIIdFromURL();
+            const payload = {
+                vendor_id: parseInt(poiId, 10),
                 rating: selectedRating,
-                author: 'Traveler',
-                date: new Date().toLocaleDateString()
+                description: reviewText
             };
-            
-            // Get existing reviews from localStorage
-            let reviews = JSON.parse(localStorage.getItem('reviews_' + window.location.search) || '[]');
-            reviews.push(review);
-            localStorage.setItem('reviews_' + window.location.search, JSON.stringify(reviews));
-            
-            showMessage('Review posted successfully!', 'success');
-            document.getElementById('reviewText').value = '';
-            selectedRating = 0;
-            // Reset stars
-            const inputs = document.querySelectorAll('#ratingSelect input[name="rating"]');
-            inputs.forEach(input => {
-                input.checked = false;
-            });
-            renderRatingPreview(0);
-            // Update display
-            const poi = currentPOI || buildFallbackPOI(getPOIIdFromURL());
-            currentPOI = {
-                ...poi,
-                reviews
-            };
-            displayReviews(currentPOI);
-            
-            userHasReviewed = true;
-            const warningDiv = document.getElementById('alreadyReviewedWarning');
-            if (warningDiv) warningDiv.style.display = 'flex';
+
+            try {
+                const response = await fetch(VENDORS_API_URL + 'rating', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authHeader
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to submit review');
+                }
+
+                showMessage('Review posted successfully!', 'success');
+                document.getElementById('reviewText').value = '';
+                selectedRating = 0;
+                const inputs = document.querySelectorAll('#ratingSelect input[name="rating"]');
+                inputs.forEach(input => { input.checked = false; });
+                renderRatingPreview(0);
+
+                // Re-fetch reviews from API
+                try {
+                    const ratingsResp = await fetch(`${VENDORS_API_URL}${encodeURIComponent(poiId)}/ratings`);
+                    if (ratingsResp.ok) {
+                        currentPOI.reviews = await ratingsResp.json();
+                    }
+                } catch (e) {
+                    console.warn('Could not reload reviews.', e);
+                }
+                displayReviews(currentPOI);
+
+                userHasReviewed = true;
+                const warningDiv = document.getElementById('alreadyReviewedWarning');
+                if (warningDiv) warningDiv.style.display = 'flex';
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
         }
         
         // Initialize page
@@ -464,16 +513,6 @@
             displayPOIInfo(currentPOI);
             displayReviews(currentPOI);
             initStars();
-            
-            // Check if already reviewed
-            const existingReviews = JSON.parse(localStorage.getItem('reviews_' + window.location.search) || '[]');
-            if (existingReviews.length > 0) {
-                currentPOI.reviews = existingReviews;
-                displayReviews(currentPOI);
-                userHasReviewed = true;
-                const warningDiv = document.getElementById('alreadyReviewedWarning');
-                if (warningDiv) warningDiv.style.display = 'flex';
-            }
         }
         
         // Attach event listeners

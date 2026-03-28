@@ -42,8 +42,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         email=user_data.email,
         password_hash=hashed_password,
-        first_name=user_data.first_name,
-        # last_name=user_data.last_name,
+        user_name=user_data.first_name,
     )
     db.add(new_user)
     db.commit()
@@ -144,6 +143,34 @@ def create_rating(
     db.commit()
 
     return new_rating
+
+
+@vendors_router.get("/{vendor_id}/ratings", response_model=list[RatingOut])
+def get_vendor_ratings(
+    vendor_id: int,
+    db: Session = Depends(get_db),
+):
+    """Get all ratings for a specific vendor"""
+    vendor = db.query(Vendor).filter(Vendor.id == vendor_id).first()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    ratings = (
+        db.query(VendorRating)
+        .filter(VendorRating.vendor_id == vendor_id)
+        .order_by(VendorRating.created_at.desc())
+        .all()
+    )
+
+    result = []
+    for r in ratings:
+        user = db.query(User).filter(User.id == r.user_id).first()
+        name = user.user_name if user else None
+        out = RatingOut.model_validate(r)
+        out.user_name = name or f"User #{r.user_id}"
+        result.append(out)
+    return result
+
 
 @vendors_router.get("/{vendor_id}", response_model=VendorOut)
 def get_vendor(vendor_id: int, lang: str = Query("bg"), db: Session = Depends(get_db)):

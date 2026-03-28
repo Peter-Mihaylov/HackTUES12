@@ -60,7 +60,7 @@ export async function loadPOIData() {
     return allPOIsData;
 }
 
-export function savePOIData(poiToSync = null) {
+export async function savePOIData(poiToSync = null) {
     // Save user's reviewed POIs
     localStorage.setItem('userReviewedPOIs', JSON.stringify([...userReviewedPOIs]));
 
@@ -75,20 +75,31 @@ export function savePOIData(poiToSync = null) {
         cover_image: poiToSync.emoji || getCoverEmoji(poiToSync.type)
     };
 
-    void authFetch(VENDORS_API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    }).then(async (response) => {
-        if (!response.ok) {
+    try {
+        const response = await authFetch(VENDORS_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+            const vendor = await response.json();
+            // Update local POI with the real backend ID
+            const oldId = poiToSync.id;
+            poiToSync.id = String(vendor.id);
+            // Also update in allPOIsData array
+            const idx = allPOIsData.findIndex(p => p.id === oldId);
+            if (idx !== -1) {
+                allPOIsData[idx].id = String(vendor.id);
+            }
+        } else {
             const errorBody = await response.text().catch(() => '');
             console.warn('Failed to save POI to API.', response.status, errorBody);
         }
-    }).catch((err) => {
+    } catch (err) {
         console.warn('Could not save POI to API.', err);
-    });
+    }
 }
 
 export function getPOIById(id) {
@@ -99,7 +110,7 @@ export function getPOIByCoords(lat, lng) {
     return allPOIsData.find(poi => Math.abs(poi.lat - lat) < 0.0001 && Math.abs(poi.lng - lng) < 0.0001);
 }
 
-export function addPOIData(poi) {
+export async function addPOIData(poi) {
     const newId = poi.id || (Date.now().toString() + Math.random().toString(36).substr(2, 6));
     const newPOI = {
         ...poi,
@@ -107,7 +118,7 @@ export function addPOIData(poi) {
         reviews: poi.reviews || []
     };
     allPOIsData.push(newPOI);
-    savePOIData(newPOI);
+    await savePOIData(newPOI);
     return newPOI;
 }
 

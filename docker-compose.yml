@@ -44,11 +44,11 @@ services:
     image: httpd:2.4-alpine
     container_name: hacktues12-apache
     ports:
-      - "8080:8080"
+      - "8001:8001"
     volumes:
       - ./public_html:/usr/local/apache2/htdocs:ro
     command: >
-      /bin/sh -c "sed -i 's/Listen 80/Listen 8080/' /usr/local/apache2/conf/httpd.conf
+      /bin/sh -c "sed -i 's/Listen 80/Listen 8001/' /usr/local/apache2/conf/httpd.conf
       && httpd-foreground"
     restart: unless-stopped
 
