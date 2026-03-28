@@ -8,6 +8,7 @@ function switchTab(m) {
   document.getElementById('tab-in').classList.toggle('active', m === 'in');
   document.getElementById('tab-up').classList.toggle('active', m === 'up');
   document.getElementById('wrap-name').classList.toggle('hidden', m === 'in');
+  document.getElementById('pw-bars').classList.toggle('hidden', m === 'in');
   document.getElementById('form-subtitle').textContent =
     m === 'in' ? 'Sign in to continue your journey' : 'Join thousands of travelers';
   document.getElementById('cta-label').textContent =
@@ -209,7 +210,7 @@ async function doAuth() {
     localStorage.setItem('routeplanner_token_type', data.token_type || 'bearer');
     localStorage.setItem('routeplanner_auth_response', JSON.stringify(data));
 
-    showToast('Welcome to RouteRoots!');
+    showToast('Welcome to SergiykaBG!');
     setTimeout(() => {
       window.location.href = 'index.html';
     }, 1200);
